@@ -1,6 +1,9 @@
 library(shiny)
+library(SummarizedExperiment)
 
 # load baseline data
+# loads object called baseline_data
+load(file.path('data', 'Mm_baseline_data.rda'))
 
 # Server logic
 server <- function(input, output, session) {
