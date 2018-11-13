@@ -8,15 +8,79 @@ Source: CRAN
 Version: 1.66.0-1
 Hash: 4cc8883584b955ed01f38f68bc03af6d
 
+Package: Biobase
+Source: Bioconductor
+Version: 2.34.0
+Hash: cd3d884ba3f526861c54f24f5f52203d
+Requires: BiocGenerics
+
+Package: BiocGenerics
+Source: Bioconductor
+Version: 0.20.0
+Hash: ce45642fa93df3c66879867d96815407
+
+Package: BiocInstaller
+Source: Bioconductor
+Version: 1.24.0
+Hash: b1c2c51cc77fd1031c7851d3116c39d0
+
+Package: GenomeInfoDb
+Source: Bioconductor
+Version: 1.10.3
+Hash: e5843ba981f847c6b3d997e8a2c4500c
+Requires: BiocGenerics, IRanges, RCurl, S4Vectors
+
+Package: GenomicRanges
+Source: Bioconductor
+Version: 1.26.4
+Hash: 6482ccdc9dd14142fca40435ce258703
+Requires: BiocGenerics, GenomeInfoDb, IRanges, S4Vectors, XVector
+
+Package: IRanges
+Source: Bioconductor
+Version: 2.8.2
+Hash: 30ff2556d66ae27c76bcda7567f2cb05
+Requires: BiocGenerics, S4Vectors
+
 Package: R6
 Source: CRAN
 Version: 2.2.2
 Hash: b2366cd9d2f3851a5704b4e192b985c2
 
+Package: RCurl
+Source: CRAN
+Version: 1.95-4.10
+Hash: 06af5153f969a90c6cd6c87ee57baa44
+Requires: bitops
+
 Package: Rcpp
 Source: CRAN
 Version: 0.12.17
 Hash: d2eff4634ccd7aca030c540ad805ac4a
+
+Package: S4Vectors
+Source: Bioconductor
+Version: 0.12.2
+Hash: 7c9135565583f92fd8db19438e7b8238
+Requires: BiocGenerics
+
+Package: SummarizedExperiment
+Source: Bioconductor
+Version: 1.4.0
+Hash: ddae9ff1149bff49fe562762692d1f38
+Requires: Biobase, BiocGenerics, GenomeInfoDb, GenomicRanges, IRanges,
+    S4Vectors
+
+Package: XVector
+Source: Bioconductor
+Version: 0.14.1
+Hash: 9c18c96827e0159ef62bf061f1a53535
+Requires: BiocGenerics, IRanges, S4Vectors, zlibbioc
+
+Package: bitops
+Source: CRAN
+Version: 1.0-6
+Hash: 67d0775189fd0041d95abca618c5c07e
 
 Package: crayon
 Source: CRAN
@@ -93,3 +157,8 @@ Package: xtable
 Source: CRAN
 Version: 1.8-2
 Hash: 7293235cfcc14cdff1ce7fd1a0212031
+
+Package: zlibbioc
+Source: Bioconductor
+Version: 1.20.0
+Hash: 82a75f02d6badbed62c3bd87ce0d35ca
