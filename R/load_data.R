@@ -30,15 +30,23 @@ load_data <- function( sample_file, count_file, baseline_data, session ){
   expt_count_data <- load_count_data(count_file, session)
   ## TO DO
   # check for missing genes and warn
-
-  # make a list with all the data in
-  all_data <- list(
-    counts = as.matrix(countData),
-    rowData = data.frame(data[, !grepl('count', names(data))],
-                         row.names = rownames(countData)),
-    colData = samples
+  # make a SummarizedExperiment object
+  counts <-
+    expt_count_data[, grepl(' count$', colnames(expt_count_data)) &
+                 !grepl('normalised count$', colnames(expt_count_data))]
+  colnames(counts) <-
+    gsub(' count$', '', colnames(counts))
+  rownames(counts) <- expt_count_data[, 'Gene.ID']
+  row_data <- expt_count_data[ , !grepl('count$', colnames(expt_count_data)), drop = FALSE ]
+  
+  expt_data <- SummarizedExperiment(
+    assays = list(counts = as.matrix(counts)),
+    rowData = DataFrame(row_data),
+    colData = DataFrame(sample_info)
   )
-  return(all_data)
+  
+  merged_data <- merge_with_baseline( expt_data, baseline_data, session )
+  return(merged_data)
 }
 
 #' load_sample_data
@@ -84,6 +92,7 @@ load_sample_data <- function(sample_file, session){
   }
   
   if (session$userData[['debug']]) {
+    print('Function: load_sample_data')
     print(head(sample_info))
   }
   
@@ -138,8 +147,7 @@ load_count_data <- function(count_file, session){
 #'    Take the expt data and the baseline data and merge the two together
 #'    warning about any missing genes
 #'    
-#' @param sample_info data.frame - sample info
-#' @param expt_count_data data.frame - expt count data
+#' @param expt_data SummarizedExperiment object - expt data
 #' @param baseline_data SummarizedExperiment object - baseline data
 #' @param session session_object
 #' 
@@ -150,8 +158,34 @@ load_count_data <- function(count_file, session){
 #' 
 #' @export
 #'
-merge_with_baseline <- function( sample_info, expt_count_data, baseline_data, session_obj ) {
+merge_with_baseline <- function( expt_data, baseline_data, session_obj ) {
+  # find genes in common between expt data and baseline
+  common_genes <- intersect(rownames(expt_data), rownames(Mm_baseline))
+  expt_only_genes <- setdiff(rownames(expt_data), rownames(Mm_baseline))
+  baseline_only <- setdiff(rownames(Mm_baseline), rownames(expt_data))
   
-  common_genes <- intersect(rownames(data), rownames(Mm_baseline))
+  # subset each to common genes
+  baseline_subset <- baseline_data[ common_genes, ]
+  expt_subset <- expt_data[ common_genes, ]
   
+  # combine count data
+  counts <- cbind(assays(expt_subset)$counts, assays(baseline_subset)$counts)
+  
+  # colData - find common columns and rbind
+  common_columns <- intersect(names(colData(expt_data)), names(colData(baseline_data)))
+  col_data <- rbind( colData(expt_data)[ , common_columns ],
+                     colData(baseline_data)[ , common_columns ] )
+  # set levels of stage
+  # col_data$stage <- factor(col_data$stage,
+  #                          levels = levels( colData(baseline_data)$stage ) )
+
+  # create new SummarizedExperiment object and return it
+  merged_data <- 
+    SummarizedExperiment(
+      assays = list(counts = counts),
+      rowData = rowData(baseline_subset),
+      colData = col_data
+    )
+  
+  return(merged_data)
 }
