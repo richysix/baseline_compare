@@ -46,7 +46,10 @@ load_data <- function( sample_file, count_file, baseline_data, session ){
   )
   
   merged_data <- merge_with_baseline( expt_data, baseline_data, session )
-  return(merged_data)
+  return(
+    list( expt_data = expt_data,
+          merged_data = merged_data )
+  )
 }
 
 #' load_sample_data

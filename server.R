@@ -17,15 +17,13 @@ server <- function(input, output, session) {
   session$userData[['testing']] <- TRUE
   
   # load samples and counts files
-  combinedData <- reactive({
+  loadedData <- reactive({
     if (session$userData[['debug']]) {
       print('Function: mergedCounts')
     }
     if (session$userData[['testing']]) {
       sample_file <- file.path('data', 'Brd2-samples.txt')
       count_file <- file.path('data', 'Brd2-counts.tsv')
-      combined_data <-
-        load_data(sample_file, count_file, Mm_baseline, session)
     } else{
       # sample_file_info <- input$sample_file
       # count_file_info <- input$count_file
@@ -43,7 +41,27 @@ server <- function(input, output, session) {
       #   return(NULL)
       # }
     }
-    return(combined_data)
+    loaded_data <-
+      load_data(sample_file, count_file, Mm_baseline, session)
+    return(loaded_data)
+  })
+  
+  exptData <- reactive({
+    loaded_data <- loadedData()
+    if (is.null(loaded_data)) {
+      return(NULL)
+    } else {
+      return(loaded_data[['expt_data']])
+    }
+  })
+  
+  combinedData <- reactive({
+    loaded_data <- loadedData()
+    if (is.null(loaded_data)) {
+      return(NULL)
+    } else {
+      return(loaded_data[['merged_data']])
+    }
   })
   
   # check columns
@@ -52,7 +70,7 @@ server <- function(input, output, session) {
   # check sample stages and gene ids
   
   # combine data, getting appropriate baseline samples by stage
-  dds_plus_baseline <- reactive({
+  ddsPlusBaseline <- reactive({
     combined_data <- combinedData()
     dds <- DESeqDataSet(combined_data, design = ~ sex + condition)
     return(dds)
@@ -60,7 +78,7 @@ server <- function(input, output, session) {
   
   # run PCA
   pca_plot_obj <- reactive({
-    dds <- dds_plus_baseline()
+    dds <- ddsPlusBaseline()
     if (session$userData[['debug']]) {
       print('Function: pca_plot_obj')
       print('Variance Stabilizing Transform begin...')
