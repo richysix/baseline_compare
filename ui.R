@@ -1,4 +1,5 @@
 library(shiny)
+library(shinycssloaders)
 
 # UI for application
 ui <- fluidPage(
@@ -7,7 +8,7 @@ ui <- fluidPage(
     tabPanel("Files"
     ),
     tabPanel("PCA",
-             plotOutput("pca_plot")
+             withSpinner(plotOutput("pca_plot"))
     ),
     tabPanel("Results"
     ),

@@ -65,9 +65,17 @@ server <- function(input, output, session) {
       print('Function: pca_plot_obj')
       print('Variance Stabilizing Transform begin...')
     }
+    # Create a Progress object
+    progress <- shiny::Progress$new(session)
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    
+    progress$set(message = "Calculating PCA...", 
+                 detail = 'This will depend on the number of samples', value = 0.3)
     
     dds_vst <- varianceStabilizingTransformation(dds, blind=TRUE)
     
+    progress$set(value = 1)
     if (session$userData[['debug']]) {
       cat('Variance Stabilizing Transform done.\n')
     }
@@ -84,7 +92,7 @@ server <- function(input, output, session) {
       colour = colData(dds_vst)[['stage']]
     )
     pca_plot <- ggplot(data = plot_data) + 
-      geom_point( aes(x = pc1, y = pc2, shape = shape, fill = colour)) + 
+      geom_point( aes(x = pc1, y = pc2, shape = shape, fill = colour), size = 3) + 
       scale_shape_manual(values = c(21:24)) + 
       guides(fill = guide_legend(override.aes = list(shape = 21)))
     
