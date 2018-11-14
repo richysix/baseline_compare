@@ -5,8 +5,14 @@ library(shinycssloaders)
 ui <- fluidPage(
   navbarPage(
     "Baseline CompaRe",
-    selected = "pca_panel",
-    tabPanel("Files"
+    selected = "file_input",
+    tabPanel("Files", value = "file_input",
+             fileInput('sample_file', 'Load Sample File'),
+             fileInput('count_file', 'Load Count File'),
+             checkboxInput("test_data", 
+                           label = 'Use test data',
+                           value = FALSE),
+             hr()
     ),
     tabPanel("PCA", value = "pca_panel",
              withSpinner(plotOutput("pca_plot"))
