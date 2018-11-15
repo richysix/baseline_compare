@@ -21,8 +21,11 @@ server <- function(input, output, session) {
     if (session$userData[['debug']]) {
       print('Function: mergedCounts')
     }
-    session$userData[['testing']] <- input$test_data
+    session$userData[['demo']] <- input$demo_data
     if (session$userData[['testing']]) {
+      sample_file <- file.path('data', 'Brd2-samples.txt')
+      count_file <- file.path('data', 'Brd2-counts.tsv')
+    } else if (session$userData[['demo']]) {
       sample_file <- file.path('data', 'Brd2-samples.txt')
       count_file <- file.path('data', 'Brd2-counts.tsv')
     } else{
@@ -76,13 +79,13 @@ server <- function(input, output, session) {
   })
   
   # run PCA
-  pca_plot_obj <- reactive({
+  pca_info <- reactiveValues()
+  output$pca_progress <- renderText({
     dds <- ddsPlusBaseline()
     if (is.null(dds)) {
-      return(NULL)
     } else {
       if (session$userData[['debug']]) {
-        print('Function: pca_plot_obj')
+        print('Function: run_pca')
         print('Variance Stabilizing Transform begin...')
       }
       # Create a Progress object
@@ -100,12 +103,21 @@ server <- function(input, output, session) {
         cat('Variance Stabilizing Transform done.\n')
       }
       
-      pca <- prcomp( t( assay(dds_vst) ) )
-      propVarPC <- pca$sdev^2 / sum( pca$sdev^2 )
+      pca_info[['pca']] <- prcomp( t( assay(dds_vst) ) )
+      pca_info[['propVarPC']] <- pca$sdev^2 / sum( pca$sdev^2 )
       aload <- abs(pca$rotation)
-      propVarRegion <- sweep(aload, 2, colSums(aload), "/")
+      pca_info[['propVarRegion']] <- sweep(aload, 2, colSums(aload), "/")
+      return("PCA completed")
+    }
+  })
+  
+  pca_plot_obj <- reactive({
+    pca <- pca_info[['pca']]
+    if (is.null(pca)) {
+      return(NULL)
+    } else {
       plot_data <- data.frame(
-        pc1 = pca$x[,1],
+        pc1 = pca[['x']][,1],
         pc2 = pca$x[,2],
         shape = factor(c(rep('het', 6), rep('hom', 5), rep('wt', 3), rep('baseline', 111)),
                        levels = c('baseline', 'wt', 'het', 'hom')),
