@@ -163,9 +163,9 @@ load_count_data <- function(count_file, session){
 #'
 merge_with_baseline <- function( expt_data, baseline_data, session_obj ) {
   # find genes in common between expt data and baseline
-  common_genes <- intersect(rownames(expt_data), rownames(Mm_baseline))
-  expt_only_genes <- setdiff(rownames(expt_data), rownames(Mm_baseline))
-  baseline_only <- setdiff(rownames(Mm_baseline), rownames(expt_data))
+  common_genes <- intersect(rownames(expt_data), rownames(baseline_data))
+  expt_only_genes <- setdiff(rownames(expt_data), rownames(baseline_data))
+  baseline_only <- setdiff(rownames(baseline_data), rownames(expt_data))
   
   # subset each to common genes
   baseline_subset <- baseline_data[ common_genes, ]
