@@ -2,12 +2,13 @@ library(shiny)
 library(SummarizedExperiment)
 library(DESeq2)
 library(ggplot2)
+library(shinyMisc)
 
 # source functions
 source(file.path('R', 'load_data.R'))
 
 # load baseline data
-# loads object called baseline_data
+# loads object called Mm_baseline
 load(file.path('data', 'Mm_baseline_data.rda'))
 
 # Server logic
@@ -19,7 +20,7 @@ server <- function(input, output, session) {
   # load samples and counts files
   loadedData <- reactive({
     if (session$userData[['debug']]) {
-      print('Function: mergedCounts')
+      print('Function: loadedData')
     }
     session$userData[['demo']] <- input$demo_data
     if (session$userData[['testing']]) {
@@ -103,16 +104,19 @@ server <- function(input, output, session) {
         cat('Variance Stabilizing Transform done.\n')
       }
       
-      pca_info[['pca']] <- prcomp( t( assay(dds_vst) ) )
+      pca <- prcomp( t( assay(dds_vst) ) )
+      pca_info[['pca']] <- pca
       pca_info[['propVarPC']] <- pca$sdev^2 / sum( pca$sdev^2 )
       aload <- abs(pca$rotation)
       pca_info[['propVarRegion']] <- sweep(aload, 2, colSums(aload), "/")
+      pca_info[['dds_vst']] <- dds_vst
       return("PCA completed")
     }
   })
   
   pca_plot_obj <- reactive({
     pca <- pca_info[['pca']]
+    dds_vst <- pca_info[['dds_vst']]
     if (is.null(pca)) {
       return(NULL)
     } else {
