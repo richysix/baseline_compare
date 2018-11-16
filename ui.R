@@ -1,5 +1,7 @@
 library(shiny)
 library(shinycssloaders)
+library(shinyjs)
+library(shinyBS)
 
 # UI for application
 ui <- fluidPage(
