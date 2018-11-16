@@ -19,10 +19,31 @@ ui <- fluidPage(
                                value = TRUE),
                  hr(),
                  # options
+                 h4('Options'),
+                 radioButtons(
+                   "condition_var",
+                   label = h5("Condition"),
+                   choices = list(
+                     "None" = "None",
+                     "condition" = 'condition'
+                   ),
+                   selected = 'condition'
+                 ),
                  # use gender, needs name of gender column as well
+                 br(),
+                 h5("Gender"),
                  checkboxInput("use_gender", 
                                label = 'Use gender information',
-                               value = TRUE)
+                               value = TRUE),
+                 radioButtons(
+                   "sex_var",
+                   label = h6("Sex Variable Name"),
+                   choices = list(
+                     "None" = "None",
+                     "sex" = 'sex'
+                   ),
+                   selected = 'sex'
+                 )
                ),
                mainPanel(
                  width = 8,
