@@ -16,11 +16,11 @@
 #' @return matrix
 #'
 #' @examples
-#' load_data( 'samples.txt', 'all.tsv', Mm_e9-5_baseline, session_obj )
+#' load_data( 'samples.txt', 'all.tsv', session_obj )
 #'
 #' @export
 #'
-load_data <- function( sample_file, count_file, baseline_data, session ){
+load_data <- function( sample_file, count_file, session ){
   # read in sample info
   sample_info <- load_sample_data(sample_file, session)
   ## TO DO
@@ -44,12 +44,7 @@ load_data <- function( sample_file, count_file, baseline_data, session ){
     rowData = DataFrame(row_data),
     colData = DataFrame(sample_info)
   )
-  
-  merged_data <- merge_with_baseline( expt_data, baseline_data, session )
-  return(
-    list( expt_data = expt_data,
-          merged_data = merged_data )
-  )
+  return(expt_data)
 }
 
 #' load_sample_data

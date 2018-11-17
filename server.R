@@ -9,7 +9,12 @@ source(file.path('R', 'load_data.R'))
 
 # load baseline data
 # loads object called Mm_baseline
-load(file.path('data', 'Mm_baseline_data.rda'))
+if (session$userData[['testing']]) {
+  load('data/test-baseline.rda')
+  Mm_baseline <- Mm_baseline_test
+} else {
+  load(file.path('data', 'Mm_baseline_data.rda'))
+}
 
 # Server logic
 server <- function(input, output, session) {
@@ -18,14 +23,12 @@ server <- function(input, output, session) {
   session$userData[['testing']] <- TRUE
   
   # load samples and counts files
-  loadedData <- reactive({
+  exptData <- reactive({
     if (session$userData[['debug']]) {
-      print('Function: loadedData')
+      print('Function: exptData')
     }
     session$userData[['demo']] <- input$demo_data
     if (session$userData[['testing']]) {
-      load('data/test-baseline.rda')
-      Mm_baseline <- Mm_baseline_test
       sample_file <- file.path('data', 'test-brd2-samples.txt')
       count_file <- file.path('data', 'test-brd2-counts.tsv')
     } else if (session$userData[['demo']]) {
@@ -43,16 +46,17 @@ server <- function(input, output, session) {
       }
     }
     loaded_data <-
-      load_data(sample_file, count_file, Mm_baseline, session)
+      load_data(sample_file, count_file, session)
     return(loaded_data)
   })
   
-  exptData <- reactive({
-    loaded_data <- loadedData()
-    if (is.null(loaded_data)) {
+  combinedData <- reactive({
+    expt_data <- exptData()
+    if (is.null(expt_data)) {
       return(NULL)
     } else {
-      return(loaded_data[['expt_data']])
+      merged_data <- merge_with_baseline( expt_data, Mm_baseline, session )
+      return(merged_data)
     }
   })
   
@@ -101,20 +105,6 @@ server <- function(input, output, session) {
         )
     }
   })
-  
-  combinedData <- reactive({
-    loaded_data <- loadedData()
-    if (is.null(loaded_data)) {
-      return(NULL)
-    } else {
-      return(loaded_data[['merged_data']])
-    }
-  })
-  
-  # check columns
-  
-  # compare to baseline data
-  # check sample stages and gene ids
   
   # combine data, getting appropriate baseline samples by stage
   ddsPlusBaseline <- reactive({
@@ -169,13 +159,13 @@ server <- function(input, output, session) {
       return(NULL)
     } else {
       plot_data <- data.frame(
-        pc1 = pca[['x']][,1],
-        pc2 = pca$x[,2],
+        PC1 = pca[['x']][,1],
+        PC2 = pca[['x']][,2],
         shape = colData(dds_vst)[['condition']],
         colour = colData(dds_vst)[['stage']]
       )
       pca_plot <- ggplot(data = plot_data) +
-        geom_point( aes(x = pc1, y = pc2, shape = shape, fill = colour), size = 3) +
+        geom_point( aes(x = PC1, y = PC2, shape = shape, fill = colour), size = 3) +
         scale_shape_manual(values = c(21:24)) +
         guides(fill = guide_legend(override.aes = list(shape = 21)))
 
