@@ -16,7 +16,8 @@ ui <- fluidPage(
                  fileInput('count_file', 'Load Count File'),
                  checkboxInput("demo_data", 
                                label = 'Use Demo data',
-                               value = TRUE),
+                               value = FALSE),
+                 actionButton('analyse_data', 'Analyse Data', icon = NULL, width = NULL),
                  hr(),
                  # options
                  h4('Options'),

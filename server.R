@@ -51,12 +51,15 @@ server <- function(input, output, session) {
   })
   
   combinedData <- reactive({
-    expt_data <- exptData()
-    if (is.null(expt_data)) {
-      return(NULL)
-    } else {
-      merged_data <- merge_with_baseline( expt_data, Mm_baseline, session )
-      return(merged_data)
+    button_value <- input$analyse_data
+    if (button_value > 0) {
+      expt_data <- isolate(exptData())
+      if (is.null(expt_data)) {
+        return(NULL)
+      } else {
+        merged_data <- merge_with_baseline( expt_data, Mm_baseline, session )
+        return(merged_data)
+      }
     }
   })
   
