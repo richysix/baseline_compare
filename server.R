@@ -15,7 +15,7 @@ load(file.path('data', 'Mm_baseline_data.rda'))
 server <- function(input, output, session) {
   # set testing and debugging options
   session$userData[['debug']] <- TRUE
-  session$userData[['testing']] <- FALSE
+  session$userData[['testing']] <- TRUE
   
   # load samples and counts files
   loadedData <- reactive({
@@ -24,8 +24,10 @@ server <- function(input, output, session) {
     }
     session$userData[['demo']] <- input$demo_data
     if (session$userData[['testing']]) {
-      sample_file <- file.path('data', 'Brd2-samples.txt')
-      count_file <- file.path('data', 'Brd2-counts.tsv')
+      load('data/test-baseline.rda')
+      Mm_baseline <- Mm_baseline_test
+      sample_file <- file.path('data', 'test-brd2-samples.txt')
+      count_file <- file.path('data', 'test-brd2-counts.tsv')
     } else if (session$userData[['demo']]) {
       sample_file <- file.path('data', 'Brd2-samples.txt')
       count_file <- file.path('data', 'Brd2-counts.tsv')
@@ -169,8 +171,7 @@ server <- function(input, output, session) {
       plot_data <- data.frame(
         pc1 = pca[['x']][,1],
         pc2 = pca$x[,2],
-        shape = factor(c(rep('het', 6), rep('hom', 5), rep('wt', 3), rep('baseline', 111)),
-                       levels = c('baseline', 'wt', 'het', 'hom')),
+        shape = colData(dds_vst)[['condition']],
         colour = colData(dds_vst)[['stage']]
       )
       pca_plot <- ggplot(data = plot_data) +
