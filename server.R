@@ -9,18 +9,18 @@ source(file.path('R', 'load_data.R'))
 
 # load baseline data
 # loads object called Mm_baseline
-if (session$userData[['testing']]) {
-  load('data/test-baseline.rda')
-  Mm_baseline <- Mm_baseline_test
-} else {
-  load(file.path('data', 'Mm_baseline_data.rda'))
-}
+load(file.path('data', 'Mm_baseline_data.rda'))
 
 # Server logic
 server <- function(input, output, session) {
   # set testing and debugging options
   session$userData[['debug']] <- TRUE
   session$userData[['testing']] <- TRUE
+  
+  if (session$userData[['testing']]) {
+    load('data/test-baseline.rda')
+    Mm_baseline <- Mm_baseline_test
+  }
   
   # load samples and counts files
   exptData <- reactive({
@@ -157,9 +157,9 @@ server <- function(input, output, session) {
 
   pca_plot_obj <- reactive({
     pca <- pca_info[['pca']]
-    dds_vst <- pca_info[['dds_vst']]
     if (is.null(pca)) {
       return(NULL)
+    dds_vst <- pca_info[['dds_vst']]
     } else {
       plot_data <- data.frame(
         PC1 = pca[['x']][,1],
