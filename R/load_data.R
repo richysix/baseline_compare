@@ -162,6 +162,21 @@ merge_with_baseline <- function( expt_data, baseline_data, session_obj ) {
   expt_only_genes <- setdiff(rownames(expt_data), rownames(baseline_data))
   baseline_only <- setdiff(rownames(baseline_data), rownames(expt_data))
   
+  # create warning for any missing genes
+  msg <- NULL
+  if ( length(expt_only_genes) > 0 ) {
+    msg <- paste0('The following genes are present in the experimental data, but not in the Baseline data: ',
+                  paste0(expt_only_genes, collapse = ', '))
+    createAlert(session_obj, anchorId = 'input_file_alert', 
+                content = msg, style = 'warning')
+  }
+  if ( length(baseline_only) > 0 ) {
+    msg <- paste0('The following genes are present in the Baseline data, but not in the experimental data: ',
+                  paste0(baseline_only, collapse = ', '))
+    createAlert(session_obj, anchorId = 'input_file_alert', 
+                content = msg, style = 'warning')
+  }
+
   # subset each to common genes
   baseline_subset <- baseline_data[ common_genes, ]
   expt_subset <- expt_data[ common_genes, ]
