@@ -1,6 +1,6 @@
-#' load_data
+#' Load data from sample and count files
 #'
-#' \code{load_data} returns a Summarized Experiment object produced from the supplied sample and count files 
+#' \code{load_data} returns a Summarized Experiment object produced from the supplied sample and count files
 #'
 #'    The first column of the sample file must match the sample names in the column names of the count file.
 #'    A warning will be produced detailing sample names present in the sample file but not the count file.
@@ -79,14 +79,6 @@ load_sample_data <- function(sample_file, session){
     sample_info[[column_name]] <-
       factor(sample_info[[column_name]],
              levels = unique(sample_info[[column_name]]))
-    # unless levels are 'wt', 'het' and 'hom'
-    if (all( Reduce('|', 
-                    lapply(c('wt', 'het', 'hom'), 
-                           function(gt){ levels(sample_info[[column_name]]) == gt }) ) ) ) {
-      sample_info[[column_name]] <-
-        factor(sample_info[[column_name]],
-               levels = c('wt', 'het', 'hom'))
-    }
   }
   
   if (session$userData[['debug']]) {
@@ -167,14 +159,12 @@ merge_with_baseline <- function( expt_data, baseline_data, session_obj ) {
   if ( length(expt_only_genes) > 0 ) {
     msg <- paste0('The following genes are present in the experimental data, but not in the Baseline data: ',
                   paste0(expt_only_genes, collapse = ', '))
-    createAlert(session_obj, anchorId = 'input_file_alert', 
-                content = msg, style = 'warning')
+    warning(msg)
   }
   if ( length(baseline_only) > 0 ) {
     msg <- paste0('The following genes are present in the Baseline data, but not in the experimental data: ',
                   paste0(baseline_only, collapse = ', '))
-    createAlert(session_obj, anchorId = 'input_file_alert', 
-                content = msg, style = 'warning')
+    warning(msg)
   }
 
   # subset each to common genes
