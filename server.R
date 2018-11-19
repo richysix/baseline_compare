@@ -3,6 +3,7 @@ library(SummarizedExperiment)
 library(DESeq2)
 library(ggplot2)
 library(shinyMisc)
+library(shinyBS)
 
 # source functions
 source(file.path('R', 'load_data.R'))
@@ -57,7 +58,18 @@ server <- function(input, output, session) {
       if (is.null(expt_data)) {
         return(NULL)
       } else {
-        merged_data <- merge_with_baseline( expt_data, Mm_baseline, session )
+        merged_data <- 
+          withCallingHandlers(
+            merge_with_baseline( expt_data, Mm_baseline, session ),
+            error = function(e){ stop(e) },
+            warning = function(w){
+              print(conditionMessage(w))
+              createAlert(session, anchorId = 'input_file_alert', 
+                          content = conditionMessage(w), style = 'warning')
+              invokeRestart("muffleWarning")
+            })
+        # 
+        print(merged_data)
         return(merged_data)
       }
     }
@@ -125,6 +137,7 @@ server <- function(input, output, session) {
   output$pca_progress <- renderText({
     dds <- ddsPlusBaseline()
     if (is.null(dds)) {
+      return('Experiment Data loaded.')
     } else {
       if (session$userData[['debug']]) {
         print('Function: run_pca')
@@ -159,8 +172,8 @@ server <- function(input, output, session) {
     pca <- pca_info[['pca']]
     if (is.null(pca)) {
       return(NULL)
-    dds_vst <- pca_info[['dds_vst']]
     } else {
+      dds_vst <- pca_info[['dds_vst']]
       plot_data <- data.frame(
         PC1 = pca[['x']][,1],
         PC2 = pca[['x']][,2],
