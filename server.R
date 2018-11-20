@@ -9,20 +9,20 @@ library(shinyBS)
 source(file.path('R', 'load_data.R'))
 source(file.path('R', 'deseq_functions.R'))
 
-# load baseline data
-# loads object called Mm_baseline
-load(file.path('data', 'Mm_baseline_data.rda'))
-
 # Server logic
 server <- function(input, output, session) {
+  # load baseline data
+  # loads object called Mm_baseline
+  load(file.path('data', 'Mm_baseline_data.rda'))
+  
   # set testing and debugging options
   session$userData[['debug']] <- TRUE
   session$userData[['testing']] <- TRUE
   
-  if (session$userData[['testing']]) {
-    load('data/test-baseline.rda')
-    Mm_baseline <- Mm_baseline_test
-  }
+  # if (session$userData[['testing']]) {
+  #   load('data/test-baseline.rda')
+  #   Mm_baseline <- Mm_baseline_test
+  # }
   
   # load samples and counts files
   exptData <- reactive({
