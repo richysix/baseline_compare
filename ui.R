@@ -72,7 +72,7 @@ ui <- fluidPage(
                      # checkbox for displaying sample names
                      checkboxInput("sample_names", 
                                    label = 'Sample Names',
-                                   value = TRUE),
+                                   value = FALSE),
                      h5("Axes"),
                      # x axis buttons
                      radioButtons(
