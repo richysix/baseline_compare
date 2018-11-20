@@ -71,6 +71,15 @@ create_new_DESeq2DataSet <- function( expt_data, baseline_data = NULL,
     baseline_subset <- baseline_data[ common_genes, ]
     expt_subset <- expt_data[ common_genes, ]
     
+    # check for stages missing from the baseline data
+    expt_only_stages <- setdiff(levels(colData(expt_data)[['stage']]), 
+                                levels(colData(baseline_data)[['stage']]) )
+    if ( length(expt_only_stages) > 0 ) {
+      msg <- paste0('The following stages are present in the experimental data, but not in the Baseline data: ',
+                    paste0(expt_only_stages, collapse = ', '))
+      warning(msg)
+    }
+    
     # find baseline samples that match the stages in expt_data
     if (match_stages) {
       samples_to_keep <- 
@@ -81,6 +90,7 @@ create_new_DESeq2DataSet <- function( expt_data, baseline_data = NULL,
               baseline_subset
              ))
       baseline_subset <- baseline_subset[ , samples_to_keep ]
+      colData(baseline_subset) <- droplevels(colData(baseline_subset))
     }
     
     # combine count data
@@ -90,6 +100,16 @@ create_new_DESeq2DataSet <- function( expt_data, baseline_data = NULL,
     common_columns <- intersect(names(colData(expt_data)), names(colData(baseline_subset)))
     col_data <- rbind( colData(expt_data)[ , common_columns ],
                        colData(baseline_subset)[ , common_columns ] )
+    # set levels to match the order of baseline
+    if ( length(expt_only_stages) == 0 ) {
+      col_data$stage <- factor(col_data$stage, levels = levels(colData(baseline_subset)[['stage']]))
+    } else {
+      all_levels <- unique(col_data$stage)
+      stage_numbers <- as.numeric(sub("somites", "", all_levels))
+      col_data$stage <- factor(col_data$stage, 
+                               levels = all_levels[ order(stage_numbers) ])
+    }
+    
     row_data <- rowData(baseline_subset)
     se <- SummarizedExperiment(
       assays = list(counts = counts),
