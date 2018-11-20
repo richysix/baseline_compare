@@ -1,14 +1,16 @@
 library(shiny)
+library(shinyBS)
 library(SummarizedExperiment)
 library(DESeq2)
 library(ggplot2)
+library(scales)
 library(shinyMisc)
-library(shinyBS)
 library(biovisr)
 
 # source functions
 source(file.path('R', 'load_data.R'))
 source(file.path('R', 'deseq_functions.R'))
+source(file.path('R', 'helper_functions.R'))
 
 # Server logic
 server <- function(input, output, session) {
@@ -241,26 +243,40 @@ server <- function(input, output, session) {
     }
   })
   
-  # render PCA plot
-  output$pca_plot_reduced <- renderPlot({
+  pca_plot_data <- reactive({
     pca_info <- reactiveValuesToList(pca_info)
     if (is.null(pca_info[['pca']])) {
       return(NULL)
     } else {
       dds_vst <- pca_info[['dds_vst']]
       pca <- pca_info[['pca']]
-      plot_data <- data.frame(
-        PC1 = pca[['x']][,1],
-        PC2 = pca[['x']][,2],
-        shape = colData(dds_vst)[['condition']],
-        colour = colData(dds_vst)[['stage']]
-      )
-      pca_plot <- ggplot(data = plot_data) +
-        geom_point( aes(x = PC1, y = PC2, shape = shape, fill = colour), size = 3) +
-        scale_shape_manual(values = c(21:24)) +
-        guides(fill = guide_legend(override.aes = list(shape = 21)))
-
-      return(pca_plot)
+      plot_data <- cbind( pca[['x']], as.data.frame(colData(dds_vst)) )
+      return(plot_data)
+    }
+  })
+  
+  # render PCA plot
+  output$pca_plot_reduced <- renderPlot({
+    plot_data <- pca_plot_data()
+    if (is.null(plot_data)) {
+      return(NULL)
+    } else {
+      dds <- pca_info[['dds_vst']]
+      if (is.null(dds)) {
+        return(NULL)
+      } else {
+        col_palette <- colour_palette(dds)
+        shape_palette <- shape_palette(dds)
+        print(shape_palette)
+        pca_plot <- 
+          scatterplot_with_fill_and_shape(
+            plot_data, input$x_axis_pc, input$y_axis_pc, 
+            fill_var = 'stage', fill_palette = col_palette,
+            shape_var = 'condition', shape_palette = shape_palette,
+            sample_names = input$sample_names)
+  
+        return(pca_plot)
+      }
     }
   })
   
@@ -292,25 +308,38 @@ server <- function(input, output, session) {
     }
   }, priority = -1000)
   
-  output$pca_plot_all <- renderPlot({
+  pca_plot_data_all <- reactive({
     pca_info <- reactiveValuesToList(pca_info_all)
     if (is.null(pca_info[['pca']])) {
       return(NULL)
     } else {
       dds_vst <- pca_info[['dds_vst']]
       pca <- pca_info[['pca']]
-      plot_data <- data.frame(
-        PC1 = pca[['x']][,1],
-        PC2 = pca[['x']][,2],
-        shape = colData(dds_vst)[['condition']],
-        colour = colData(dds_vst)[['stage']]
-      )
-      pca_plot <- ggplot(data = plot_data) +
-        geom_point( aes(x = PC1, y = PC2, shape = shape, fill = colour), size = 3) +
-        scale_shape_manual(values = c(21:24)) +
-        guides(fill = guide_legend(override.aes = list(shape = 21)))
-      
-      return(pca_plot)
+      plot_data <- cbind( pca[['x']], as.data.frame(colData(dds_vst)) )
+      return(plot_data)
+    }
+  })
+  
+  output$pca_plot_all <- renderPlot({
+    plot_data <- pca_plot_data_all()
+    if (is.null(plot_data)) {
+      return(NULL)
+    } else {
+      dds <- pca_info_all[['dds_vst']]
+      if (is.null(dds)) {
+        return(NULL)
+      } else {
+        col_palette <- colour_palette(dds)
+        shape_palette <- shape_palette(dds)
+        pca_plot <- 
+          scatterplot_with_fill_and_shape(
+            plot_data, input$x_axis_pc, input$y_axis_pc, 
+            fill_var = 'stage', fill_palette = col_palette,
+            shape_var = 'condition', shape_palette = shape_palette,
+            sample_names = input$sample_names)
+        
+        return(pca_plot)
+      }
     }
   })
   
