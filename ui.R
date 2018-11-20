@@ -50,8 +50,8 @@ ui <- fluidPage(
                  width = 8,
                  fluidPage(
                    fluidRow(bsAlert("input_file_alert")),
-                   fluidRow(withSpinner(textOutput("pca_progress"))),
-                   fluidRow(withSpinner(textOutput("deseq_progress")))
+                   fluidRow(textOutput("pca_progress")),
+                   fluidRow(textOutput("deseq_progress"))
                  )
                )
             )
