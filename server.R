@@ -4,6 +4,7 @@ library(DESeq2)
 library(ggplot2)
 library(shinyMisc)
 library(shinyBS)
+library(biovisr)
 
 # source functions
 source(file.path('R', 'load_data.R'))
@@ -203,12 +204,14 @@ server <- function(input, output, session) {
     }
   })
 
-  pca_plot_obj <- reactive({
-    pca <- pca_info[['pca']]
-    if (is.null(pca)) {
+  # render PCA plot
+  output$pca_plot_reduced <- renderPlot({
+    pca_info <- reactiveValuesToList(pca_info)
+    if (is.null(pca_info[['pca']])) {
       return(NULL)
     } else {
       dds_vst <- pca_info[['dds_vst']]
+      pca <- pca_info[['pca']]
       plot_data <- data.frame(
         PC1 = pca[['x']][,1],
         PC2 = pca[['x']][,2],
@@ -224,9 +227,54 @@ server <- function(input, output, session) {
     }
   })
   
-  # render heatmap plot
-  output$pca_plot <- renderPlot({
-    return(pca_plot_obj())
+  pca_info_all <- reactiveValues()
+  observer_a <- observe({
+    expt_data <- exptData()
+    deseq_datasets <- deseqDatasets()
+    if (is.null(deseq_datasets)) {
+      return(NULL)
+    } else {
+      if (session$userData[['debug']]) {
+        print('Function: run_pca_all')
+        print('Variance Stabilizing Transform begin...')
+      }
+      
+      expt_plus_all_baseline_dds_vst <- 
+        varianceStabilizingTransformation(deseq_datasets[['expt_plus_all_baseline_dds']], blind=TRUE)
+      
+      if (session$userData[['debug']]) {
+        cat('Variance Stabilizing Transform done.\n')
+      }
+      
+      pca <- prcomp( t( assay(expt_plus_all_baseline_dds_vst) ) )
+      pca_info_all[['pca']] <- pca
+      pca_info_all[['propVarPC']] <- pca$sdev^2 / sum( pca$sdev^2 )
+      aload <- abs(pca$rotation)
+      pca_info_all[['propVarRegion']] <- sweep(aload, 2, colSums(aload), "/")
+      pca_info_all[['dds_vst']] <- expt_plus_all_baseline_dds_vst
+    }
+  }, priority = -1000)
+  
+  output$pca_plot_all <- renderPlot({
+    pca_info <- reactiveValuesToList(pca_info_all)
+    if (is.null(pca_info[['pca']])) {
+      return(NULL)
+    } else {
+      dds_vst <- pca_info[['dds_vst']]
+      pca <- pca_info[['pca']]
+      plot_data <- data.frame(
+        PC1 = pca[['x']][,1],
+        PC2 = pca[['x']][,2],
+        shape = colData(dds_vst)[['condition']],
+        colour = colData(dds_vst)[['stage']]
+      )
+      pca_plot <- ggplot(data = plot_data) +
+        geom_point( aes(x = PC1, y = PC2, shape = shape, fill = colour), size = 3) +
+        scale_shape_manual(values = c(21:24)) +
+        guides(fill = guide_legend(override.aes = list(shape = 21)))
+      
+      return(pca_plot)
+    }
   })
   
   # run DESeq2
