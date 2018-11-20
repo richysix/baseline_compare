@@ -1,0 +1,9 @@
+	condition	sex	stage
+Brd2_hom1	hom	F	15 somites
+Brd2_hom2	hom	F	20 somites
+Brd2_hom3	hom	F	13 somites
+Brd2_hom4	hom	F	13 somites
+Brd2_hom5	hom	M	19 somites
+Brd2_wt1	wt	F	26 somites
+Brd2_wt2	wt	F	22 somites
+Brd2_wt3	wt	M	28 somites
