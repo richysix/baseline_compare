@@ -57,7 +57,61 @@ ui <- fluidPage(
             )
     ),
     tabPanel("PCA", value = "pca_panel",
-             withSpinner(plotOutput("pca_plot"))
+             fluidPage(
+               fluidRow(
+                 sidebarLayout(
+                   mainPanel(
+                     fluidPage(
+                       withSpinner(plotOutput("pca_plot_reduced", height = "480px")),
+                       withSpinner(plotOutput("pca_plot_all", height = "480px"))
+                     ),
+                     width = 9
+                   ),
+                   sidebarPanel(
+                     h5("PCA Options"),
+                     # checkbox for displaying sample names
+                     checkboxInput("sample_names", 
+                                   label = 'Sample Names',
+                                   value = TRUE),
+                     h5("Axes"),
+                     # x axis buttons
+                     radioButtons(
+                       "x_axis_pc",
+                       label = h6("X axis component"),
+                       choices = list(
+                         "PC1" = "PC1",
+                         "PC2" = "PC2"
+                       ),
+                       selected = 1
+                     ),
+                     # y axis buttons
+                     radioButtons(
+                       "y_axis_pc",
+                       label = h6("Y axis component"),
+                       choices = list(
+                         "PC1" = "PC1",
+                         "PC2" = "PC2"
+                       ),
+                       selected = 2
+                     ),
+                     h4('Downloads'),
+                     radioButtons(
+                       "plotFormat",
+                       label = h5("Plot File"),
+                       choices = list('pdf' = 'pdf', 
+                                      'eps' = 'eps',
+                                      'svg' = 'svg',
+                                      'png' = 'png'),
+                       selected = 'pdf'
+                     ),
+                     downloadButton('download_current', 'Download Current Plot'),
+                     downloadButton('download_all', 'Download all (pdf)'),
+                     downloadButton('download_rda', 'Download rda file of plot'),
+                     width = 3
+                   )
+                 )
+               )
+             )
     ),
     tabPanel("Results"
     ),
