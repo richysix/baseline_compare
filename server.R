@@ -204,6 +204,43 @@ server <- function(input, output, session) {
     }
   })
 
+  pcs <- reactive({
+    if (session$userData[['debug']]) {
+      cat("Function: pcs\n")
+    }
+    pca_info <- pca_info
+    if(is.null(pca_info)) {
+      return(NULL)
+    } else {
+      # return names of columns that contribute > 1% of variance
+      pca <- pca_info[['pca']]
+      return(colnames(pca[['x']])[ pca_info[['propVarPC']] > 0.01 ])
+    }
+  })
+  
+  # Change UI options based on input data
+  # Components
+  observe({
+    pc_names <- pcs()
+    if (session$userData[['debug']]) {
+      cat("Function: UI observer - Components\n")
+      print(pc_names)
+    }
+    if(!is.null(pc_names)) {
+      pc_names <- as.list(pc_names)
+      names(pc_names) <- pc_names
+      # Set the label, choices, and selected item
+      updateRadioButtons(session, "x_axis_pc",
+                         choices = pc_names,
+                         selected = pc_names[[1]]
+      )
+      updateRadioButtons(session, "y_axis_pc",
+                         choices = pc_names,
+                         selected = pc_names[[2]]
+      )
+    }
+  })
+  
   # render PCA plot
   output$pca_plot_reduced <- renderPlot({
     pca_info <- reactiveValuesToList(pca_info)
