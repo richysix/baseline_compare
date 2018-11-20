@@ -7,6 +7,7 @@ library(shinyBS)
 
 # source functions
 source(file.path('R', 'load_data.R'))
+source(file.path('R', 'deseq_functions.R'))
 
 # load baseline data
 # loads object called Mm_baseline
@@ -49,30 +50,6 @@ server <- function(input, output, session) {
     loaded_data <-
       load_data(sample_file, count_file, session)
     return(loaded_data)
-  })
-  
-  combinedData <- reactive({
-    button_value <- input$analyse_data
-    if (button_value > 0) {
-      expt_data <- isolate(exptData())
-      if (is.null(expt_data)) {
-        return(NULL)
-      } else {
-        merged_data <- 
-          withCallingHandlers(
-            merge_with_baseline( expt_data, Mm_baseline, session ),
-            error = function(e){ stop(e) },
-            warning = function(w){
-              print(conditionMessage(w))
-              createAlert(session, anchorId = 'input_file_alert', 
-                          content = conditionMessage(w), style = 'warning')
-              invokeRestart("muffleWarning")
-            })
-        # 
-        print(merged_data)
-        return(merged_data)
-      }
-    }
   })
   
   factors_in_data <- reactive({
@@ -121,50 +98,108 @@ server <- function(input, output, session) {
     }
   })
   
-  # combine data, getting appropriate baseline samples by stage
-  ddsPlusBaseline <- reactive({
-    combined_data <- combinedData()
-    if (is.null(combined_data)) {
-      return(NULL)
-    } else {
-      dds <- DESeqDataSet(combined_data, design = ~ sex + condition)
-      return(dds)
+  # create DESeq2 data sets
+  deseqDatasets <- reactive({
+    button_value <- input$analyse_data
+    if (button_value > 0) {
+      expt_data <- isolate(exptData())
+      if (is.null(expt_data)) {
+        return(NULL)
+      } else {
+        use_gender <- isolate(input$use_gender)
+        if ( use_gender ) {
+          gender_column = isolate(input$sex_var)
+          groups <- c('sex')
+        } else {
+          gender_column = NULL
+          groups <- NULL
+        }
+        # experiment data only
+        dds <- 
+          create_new_DESeq2DataSet(expt_data, baseline_data = NULL, gender_column = gender_column,
+                                   groups = groups, condition_column = isolate(input$condition_var), 
+                                   session_obj = session )
+        
+        # experiment data plus stage matched baseline samples
+        expt_plus_baseline_dds <-
+          withCallingHandlers(
+            create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
+                                     groups = groups, condition_column = isolate(input$condition_var), 
+                                     match_stages = TRUE, session_obj = session ),
+            error = function(e){ stop(e) },
+            warning = function(w){
+              print(conditionMessage(w))
+              createAlert(session, anchorId = 'input_file_alert', 
+                          content = conditionMessage(w), style = 'warning')
+              invokeRestart("muffleWarning")
+            })
+        
+        # experiment data plus all baseline samples
+        expt_plus_all_baseline_dds <-
+          suppressWarnings(
+            create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
+                                     groups = groups, condition_column = isolate(input$condition_var), 
+                                     match_stages = FALSE, session_obj = session ))
+
+        # experiment data plus stage matched baseline samples
+        # design formula includes stage
+        groups <- c(groups, 'stage')
+        expt_plus_baseline_with_stage_dds <-
+          suppressWarnings(
+            create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
+                                     groups = groups, condition_column = isolate(input$condition_var), 
+                                     match_stages = TRUE, session_obj = session ))
+
+        return(
+          list(
+            dds = dds,
+            expt_plus_baseline_dds = expt_plus_baseline_dds,
+            expt_plus_all_baseline_dds = expt_plus_all_baseline_dds,
+            expt_plus_baseline_with_stage_dds = expt_plus_baseline_with_stage_dds
+          )
+        )
+      }
     }
   })
-
-  # run PCA
+  
+  # run PCA with just match baseline samples for speed
   pca_info <- reactiveValues()
   output$pca_progress <- renderText({
-    dds <- ddsPlusBaseline()
-    if (is.null(dds)) {
-      return('Experiment Data loaded.')
+    expt_data <- exptData()
+    deseq_datasets <- deseqDatasets()
+    if (is.null(expt_data)) {
+      return('Loading Data ...')
     } else {
-      if (session$userData[['debug']]) {
-        print('Function: run_pca')
-        print('Variance Stabilizing Transform begin...')
+      if (is.null(deseq_datasets)) {
+        return('Experiment Data loaded.')
+      } else {
+        if (session$userData[['debug']]) {
+          print('Function: run_pca')
+          print('Variance Stabilizing Transform begin...')
+        }
+        # Create a Progress object
+        progress <- shiny::Progress$new(session)
+        # Make sure it closes when we exit this reactive, even if there's an error
+        on.exit(progress$close())
+        
+        progress$set(message = "Calculating PCA...",
+                     detail = 'This will depend on the number of samples', value = 0.3)
+        
+        dds_vst <- varianceStabilizingTransformation(deseq_datasets[['expt_plus_baseline_dds']], blind=TRUE)
+        
+        progress$set(value = 1)
+        if (session$userData[['debug']]) {
+          cat('Variance Stabilizing Transform done.\n')
+        }
+        
+        pca <- prcomp( t( assay(dds_vst) ) )
+        pca_info[['pca']] <- pca
+        pca_info[['propVarPC']] <- pca$sdev^2 / sum( pca$sdev^2 )
+        aload <- abs(pca$rotation)
+        pca_info[['propVarRegion']] <- sweep(aload, 2, colSums(aload), "/")
+        pca_info[['dds_vst']] <- dds_vst
+        return("PCA completed.")
       }
-      # Create a Progress object
-      progress <- shiny::Progress$new(session)
-      # Make sure it closes when we exit this reactive, even if there's an error
-      on.exit(progress$close())
-
-      progress$set(message = "Calculating PCA...",
-                   detail = 'This will depend on the number of samples', value = 0.3)
-
-      dds_vst <- varianceStabilizingTransformation(dds, blind=TRUE)
-
-      progress$set(value = 1)
-      if (session$userData[['debug']]) {
-        cat('Variance Stabilizing Transform done.\n')
-      }
-
-      pca <- prcomp( t( assay(dds_vst) ) )
-      pca_info[['pca']] <- pca
-      pca_info[['propVarPC']] <- pca$sdev^2 / sum( pca$sdev^2 )
-      aload <- abs(pca$rotation)
-      pca_info[['propVarRegion']] <- sweep(aload, 2, colSums(aload), "/")
-      pca_info[['dds_vst']] <- dds_vst
-      return("PCA completed")
     }
   })
 
