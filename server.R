@@ -20,12 +20,7 @@ server <- function(input, output, session) {
   
   # set testing and debugging options
   session$userData[['debug']] <- TRUE
-  session$userData[['testing']] <- TRUE
-  
-  # if (session$userData[['testing']]) {
-  #   load('data/test-baseline.rda')
-  #   Mm_baseline <- Mm_baseline_test
-  # }
+  session$userData[['testing']] <- FALSE
   
   # load samples and counts files
   exptData <- reactive({
@@ -110,8 +105,9 @@ server <- function(input, output, session) {
         return(NULL)
       } else {
         use_gender <- isolate(input$use_gender)
+        condition_column <- isolate(input$condition_var)
         if ( use_gender ) {
-          gender_column = isolate(input$sex_var)
+          gender_column <- isolate(input$sex_var)
           groups <- c('sex')
         } else {
           gender_column = NULL
@@ -120,14 +116,14 @@ server <- function(input, output, session) {
         # experiment data only
         dds <- 
           create_new_DESeq2DataSet(expt_data, baseline_data = NULL, gender_column = gender_column,
-                                   groups = groups, condition_column = isolate(input$condition_var), 
+                                   groups = groups, condition_column = condition_column, 
                                    session_obj = session )
         
         # experiment data plus stage matched baseline samples
         expt_plus_baseline_dds <-
           withCallingHandlers(
             create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
-                                     groups = groups, condition_column = isolate(input$condition_var), 
+                                     groups = groups, condition_column = condition_column, 
                                      match_stages = TRUE, session_obj = session ),
             error = function(e){ stop(e) },
             warning = function(w){
@@ -141,7 +137,7 @@ server <- function(input, output, session) {
         expt_plus_all_baseline_dds <-
           suppressWarnings(
             create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
-                                     groups = groups, condition_column = isolate(input$condition_var), 
+                                     groups = groups, condition_column = condition_column, 
                                      match_stages = FALSE, session_obj = session ))
 
         # experiment data plus stage matched baseline samples
@@ -150,7 +146,7 @@ server <- function(input, output, session) {
         expt_plus_baseline_with_stage_dds <-
           suppressWarnings(
             create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
-                                     groups = groups, condition_column = isolate(input$condition_var), 
+                                     groups = groups, condition_column = condition_column, 
                                      match_stages = TRUE, session_obj = session ))
 
         return(
@@ -267,7 +263,9 @@ server <- function(input, output, session) {
       } else {
         col_palette <- colour_palette(dds)
         shape_palette <- shape_palette(dds)
-        print(shape_palette)
+        if (session$userData[['debug']]) {
+          print(shape_palette)
+        }
         pca_plot <- 
           scatterplot_with_fill_and_shape(
             plot_data, input$x_axis_pc, input$y_axis_pc, 
