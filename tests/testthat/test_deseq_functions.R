@@ -97,3 +97,26 @@ test_that("missing stage in expt data", {
     info = 'missing stage'
   )
 })
+
+test_that("Model matrix not full rank", {
+  expt_data_not_full_rank <- expt_data
+  colData(expt_data_not_full_rank)[['stage']] <- 
+    factor(c(rep('15somites', 5), rep('25somites', 3)), 
+           levels = c('15somites', '25somites'))
+  expect_warning(create_new_DESeq2DataSet(expt_data_not_full_rank, 
+                                          gender_column = 'sex', 
+                                          groups = c('sex', 'stage'),
+                                          condition_column = 'condition',
+                                          session_obj = session_obj),
+                 "Model matrix not full rank"
+  )
+})
+
+# Test run_deseq
+deseq_res <- run_deseq(expt_only_dds, 'hom', 'wt')
+test_that("DESeq results", {
+  expect_equal(sum(deseq_res$result$padj < 0.05 & !is.na(deseq_res$result$padj)),
+               537)
+  expect_equal(head( order(deseq_res$result$padj) ),
+               c(130, 599, 733, 1701, 1384, 1294) )
+})

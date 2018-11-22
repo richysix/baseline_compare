@@ -1,3 +1,5 @@
+library('DESeq2')
+
 #' Create a DESeq2 DataSet from the supplied data
 #'
 #' \code{create_new_DESeq2DataSet}
@@ -116,10 +118,57 @@ create_new_DESeq2DataSet <- function( expt_data, baseline_data = NULL,
       rowData = row_data,
       colData = col_data
     )
-    
-    dds <- DESeqDataSet(se, design = design_formula)
   } else {
-    dds <- DESeqDataSet(expt_data, design = design_formula)
+    se <- expt_data
   }
+  
+  dds <- tryCatch( DESeqDataSet(se, design = design_formula),
+                   error = function(err){
+                     if( grepl('the model matrix is not full rank', err$message ) ){
+                       if (design_formula == '~condition') {
+                         stop(err$message)
+                       }
+                       warning("Model matrix not full rank. Running with just condition...\n")
+                       design_formula <- as.formula('~condition')
+                       DESeqDataSet(se, design = design_formula)
+                     } else {
+                       stop(err$message)
+                     }
+                   }
+  )
+                 
   return(dds)
+}
+
+#' Run DESeq2
+#'
+#' \code{run_deseq} Runs DESeq2 on the supplied DESeqDataSet and returns the results
+#'
+#' @param dds DESeqDataSet object
+#' @param expt_condition character - A level of the condition variable to compare
+#' @param ctrl_condition character - A level of the condition variable to compare to
+#' 
+#' @return list containing:
+#'         deseq = DESeqDataSet object
+#'         results = DESeqResults object
+#'
+#' @examples
+#' run_deseq( deseq_dataset, expt_condition, ctrl_condition )
+#'
+run_deseq <- function(dds, expt_condition, ctrl_condition) {
+  dds <- tryCatch( DESeq(dds),
+                   error = function(err){
+                     if( grepl('the model matrix is not full rank', err$message ) ){
+                       cat("Model matrix not full rank. Running with just condition...\n")
+                       design(dds) <- formula('~ condition')
+                       DESeq(dds)
+                     } else {
+                       stop(err$message)
+                     }
+                   }
+  )
+  
+  # Write out results for specified pair of conditions
+  res <- results(dds, contrast=c("condition", expt_condition, ctrl_condition))
+  return(list(deseq = dds, result = res))
 }
