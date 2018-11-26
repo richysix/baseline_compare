@@ -114,7 +114,7 @@ server <- function(input, output, session) {
           groups <- NULL
         }
         # experiment data only
-        dds <- 
+        expt_only_dds <- 
           create_new_DESeq2DataSet(expt_data, baseline_data = NULL, gender_column = gender_column,
                                    groups = groups, condition_column = condition_column, 
                                    session_obj = session )
@@ -151,7 +151,7 @@ server <- function(input, output, session) {
 
         return(
           list(
-            dds = dds,
+            expt_only_dds = expt_only_dds,
             expt_plus_baseline_dds = expt_plus_baseline_dds,
             expt_plus_all_baseline_dds = expt_plus_all_baseline_dds,
             expt_plus_baseline_with_stage_dds = expt_plus_baseline_with_stage_dds
@@ -257,12 +257,12 @@ server <- function(input, output, session) {
     if (is.null(plot_data)) {
       return(NULL)
     } else {
-      dds <- pca_info[['dds_vst']]
-      if (is.null(dds)) {
+      dds_vst <- pca_info[['dds_vst']]
+      if (is.null(dds_vst)) {
         return(NULL)
       } else {
-        col_palette <- colour_palette(dds)
-        shape_palette <- shape_palette(dds)
+        col_palette <- colour_palette(dds_vst)
+        shape_palette <- shape_palette(dds_vst)
         if (session$userData[['debug']]) {
           print(shape_palette)
         }
@@ -311,9 +311,9 @@ server <- function(input, output, session) {
     if (is.null(pca_info[['pca']])) {
       return(NULL)
     } else {
-      dds_vst <- pca_info[['dds_vst']]
+      expt_plus_all_baseline_dds_vst <- pca_info[['dds_vst']]
       pca <- pca_info[['pca']]
-      plot_data <- cbind( pca[['x']], as.data.frame(colData(dds_vst)) )
+      plot_data <- cbind( pca[['x']], as.data.frame(colData(expt_plus_all_baseline_dds_vst)) )
       return(plot_data)
     }
   })
@@ -323,12 +323,12 @@ server <- function(input, output, session) {
     if (is.null(plot_data)) {
       return(NULL)
     } else {
-      dds <- pca_info_all[['dds_vst']]
-      if (is.null(dds)) {
+      expt_plus_all_baseline_dds <- pca_info_all[['dds_vst']]
+      if (is.null(expt_plus_all_baseline_dds)) {
         return(NULL)
       } else {
-        col_palette <- colour_palette(dds)
-        shape_palette <- shape_palette(dds)
+        col_palette <- colour_palette(expt_plus_all_baseline_dds)
+        shape_palette <- shape_palette(expt_plus_all_baseline_dds)
         pca_plot <- 
           scatterplot_with_fill_and_shape(
             plot_data, input$x_axis_pc, input$y_axis_pc, 
