@@ -140,6 +140,99 @@ create_new_DESeq2DataSet <- function( expt_data, baseline_data = NULL,
   return(dds)
 }
 
+#' Overlap DESeq2 results
+#'
+#' \code{overlap_deseq_results} Takes 3 DESeqResults objects 
+#'
+#'    This function takes the three DESeqDataSets and runs DESeq2 three
+#'    different ways on the data. 
+#'    1. The experimental samples on their own  (model: either ~ condition or ~ sex + condition)
+#'    2. The experimental and baseline samples  (model: either ~ condition or ~ sex + condition)
+#'    3. The experimental and baseline samples  (model: either ~ stage + condition or ~ sex + stage + condition)
+#'    
+#' @param deseq_datasets list of DESeqDataSet objects returned from \code{deseqDatasets}
+#' @param expt_condition experimental condition
+#' @param ctrl_condition control condition
+#' @param session session_object
+#' 
+#' @return list containing the 3 DESeq2 DataSet objects which have had DESeq run on them
+#'
+#' @examples
+#' overlap_deseq_results( expt_data, combined_data, session_obj )
+#'
+overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_condition, session_obj ) {
+  # expt only
+  expt_only_deseq_res <- run_deseq(deseq_datasets[['expt_only_dds']], 
+                                    expt_condition, ctrl_condition)
+  # plus_baseline
+  expt_plus_baseline_deseq_res <- run_deseq(deseq_datasets[['expt_plus_baseline_dds']], 
+                                      expt_condition, ctrl_condition)
+  # plus_baseline_with_stage
+  expt_plus_baseline_with_stage_deseq_res <- 
+    run_deseq(deseq_datasets[['expt_plus_baseline_with_stage_dds']],
+              expt_condition, ctrl_condition)
+  
+  # overlap lists
+  overlaps <- list()
+  results <- list(expt_only_deseq_res$result, 
+                  expt_plus_baseline_deseq_res$result,
+                  expt_plus_baseline_with_stage_deseq_res$result)
+  sig_genes_list <- lapply(results,
+                           function(res){
+                             rownames(res)[ res$padj < 0.05 & !is.na(res$padj) ]
+                           })
+  all_genes <- rownames(deseq_datasets[['expt_only_dds']])
+  only_1 <- intersect(sig_genes_list[[1]], setdiff(all_genes, union(sig_genes_list[[2]], sig_genes_list[[3]])) )
+  only_2 <- intersect(sig_genes_list[[2]], setdiff(all_genes, union(sig_genes_list[[1]], sig_genes_list[[3]])) )
+  only_3 <- intersect(sig_genes_list[[3]], setdiff(all_genes, union(sig_genes_list[[1]], sig_genes_list[[2]])) )
+  in_1_and_2_not_3 <- intersect(intersect(sig_genes_list[[1]], sig_genes_list[[2]]), setdiff(all_genes, sig_genes_list[[3]]) )
+  in_1_and_3_not2 <- intersect(intersect(sig_genes_list[[1]], sig_genes_list[[2]]),
+                                                 setdiff(all_genes, sig_genes_list[[2]]) )
+  in_2_and_3_not1 <- intersect(intersect(sig_genes_list[[2]], sig_genes_list[[3]]),
+                                                  setdiff(all_genes, sig_genes_list[[1]]) )
+  in_all <- intersect( intersect(sig_genes_list[[1]], sig_genes_list[[2]]), sig_genes_list[[3]] )
+  
+  overlaps[['not_used']] <- c(only_1, only_2)
+  overlaps[['mrna_as_wt']] <- c(only_3, in_1_and_3_not2)
+  overlaps[['mrna_abnormal']] <- in_1_and_2_not_3
+  overlaps[['ko_response']] <- c(in_2_and_3_not1, in_all)
+  
+  # merge results data together
+  # merge expt_only and expt_plus_baseline
+  merged_data_tmp <- 
+    merge(as.data.frame(expt_only_deseq_res$result[ , c('log2FoldChange', 'padj') ]), 
+          as.data.frame(expt_plus_baseline_deseq_res$result[ , c('log2FoldChange', 'padj') ]), 
+          by.x = 0, by.y = 0)
+  # merge in plus_baseline_wth_stage
+  merged_data_tmp <- 
+    merge(merged_data_tmp, 
+          as.data.frame(expt_plus_baseline_with_stage_deseq_res$result[ , c('log2FoldChange', 'padj') ]), 
+          by.x = 'Row.names', by.y = 0)
+  # merge in gene info
+  merged_data_tmp <- merge(merged_data_tmp, 
+                           rowData(deseq_datasets[['expt_plus_baseline_dds']]),
+                           by.x = 'Row.names', by.y = 'Gene.ID')
+  merged_data <- merged_data_tmp[ ,c('Name', "log2FoldChange.x", "padj.x", 
+                                     "log2FoldChange.y", "padj.y",
+                                     "log2FoldChange", "padj",
+                                     "Description", "Chr", "Start", "End", "Strand" ) ]
+  rownames(merged_data) <- merged_data_tmp[, "Row.names"]
+  colnames(merged_data) <- c('Name', "log2FC.expt_only", "padj.expt_only", 
+                             "log2FC.plus_baseline", "padj.plus_baseline",
+                             "log2FC.with_stage", "padj.with_stage",
+                             "Description", "Chr", "Start", "End", "Strand" )
+  
+  return(
+    list(
+      expt_only_res = expt_only_deseq_res,
+      plus_baseline_res = expt_plus_baseline_deseq_res,
+      plus_baseline_with_stage_res = expt_plus_baseline_deseq_res,
+      overlaps = overlaps,
+      merged_results = merged_data
+    )
+  )
+}
+
 #' Run DESeq2
 #'
 #' \code{run_deseq} Runs DESeq2 on the supplied DESeqDataSet and returns the results

@@ -120,3 +120,19 @@ test_that("DESeq results", {
   expect_equal(head( order(deseq_res$result$padj) ),
                c(130, 599, 733, 1701, 1384, 1294) )
 })
+
+# test overlap
+deseq_datasets <- list(
+  expt_only_dds = expt_only_dds,
+  expt_plus_baseline_dds = expt_plus_baseline_dds,
+  expt_plus_baseline_with_stage_dds = expt_plus_baseline_with_stage_dds
+)
+overlapped_results <- overlap_deseq_results(deseq_datasets, 'hom', 'wt', session_obj)
+
+test_that("DESeq2 overlaps", {
+  expect_equal(length(overlapped_results[['overlaps']][['not_used']]), 243)
+  expect_equal(length(overlapped_results[['overlaps']][['mrna_as_wt']]), 179)
+  expect_equal(length(overlapped_results[['overlaps']][['mrna_abnormal']]), 79)
+  expect_equal(length(overlapped_results[['overlaps']][['ko_response']]), 163)
+  expect_equal(dim(overlapped_results[['merged_results']]), c(1999, 12))
+})
