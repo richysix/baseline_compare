@@ -265,8 +265,8 @@ server <- function(input, output, session) {
       if (is.null(dds_vst)) {
         return(NULL)
       } else {
-        col_palette <- colour_palette(dds_vst)
-        shape_palette <- shape_palette(dds_vst)
+        col_palette <- colour_palette(colData(dds_vst)[['stage']])
+        shape_palette <- shape_palette(colData(dds_vst)[['condition']])
         if (session$userData[['debug']]) {
           print(shape_palette)
         }
@@ -331,8 +331,8 @@ server <- function(input, output, session) {
       if (is.null(expt_plus_all_baseline_dds)) {
         return(NULL)
       } else {
-        col_palette <- colour_palette(expt_plus_all_baseline_dds)
-        shape_palette <- shape_palette(expt_plus_all_baseline_dds)
+        col_palette <- colour_palette(colData(expt_plus_all_baseline_dds)[['stage']])
+        shape_palette <- shape_palette(colData(expt_plus_all_baseline_dds)[['condition']])
         pca_plot <- 
           scatterplot_with_fill_and_shape(
             plot_data, input$x_axis_pc, input$y_axis_pc, 
