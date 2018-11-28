@@ -216,7 +216,7 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
                                      "log2FoldChange.y", "padj.y",
                                      "log2FoldChange", "padj",
                                      "Chr", "Start", "End", "Strand" ) ]
-  colnames(merged_data) <- c("Gene ID", "Name", "log2FC.expt_only", "padj.expt_only", 
+  colnames(merged_data) <- c("Gene.ID", "Name", "log2FC.expt_only", "padj.expt_only", 
                              "log2FC.plus_baseline", "padj.plus_baseline",
                              "log2FC.with_stage", "padj.with_stage",
                              "Chr", "Start", "End", "Strand" )
