@@ -117,7 +117,7 @@ ui <- fluidPage(
              DT::dataTableOutput(outputId="results_table")
     ),
     tabPanel("Count Plot", value = 'count_plot_panel',
-      textOutput('count_plot_selected_gene')
+      plotOutput('count_plot_selected_gene')
     ),
     tabPanel("Help"
     )

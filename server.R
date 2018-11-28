@@ -7,6 +7,7 @@ library(ggplot2)
 library(scales)
 library(shinyMisc)
 library(biovisr)
+library(reshape2)
 
 # source functions
 source(file.path('R', 'load_data.R'))
@@ -377,10 +378,33 @@ server <- function(input, output, session) {
     priority = 1000
   )
   
-  output$count_plot_selected_gene <- renderText({
+  output$count_plot_selected_gene <- renderPlot({
     row_number <- input$results_table_rows_selected
     if (!is.null(row_number)) {
-      return(row_number)
+      # get count data for gene
+      results_table <- deseq_results()[['merged_results']]
+      if( session$userData[['debug']] ) {
+        print(row_number)
+        print(results_table)
+      }  
+      gene_id <- results_table[ row_number, 'Gene.ID' ]
+      expt_plus_baseline <- deseq_results()[['plus_baseline_res']]
+      counts <- counts(expt_plus_baseline[['deseq']], normalized = TRUE)[ gene_id, ]
+      counts_m <- melt(counts, value.name = 'Counts')
+      plot_data <- as.data.frame(merge(counts_m, colData(expt_plus_baseline[['deseq']]), by = 'row.names'))
+      
+      if( session$userData[['debug']] ) {
+        print(head(plot_data))
+      }
+      
+      col_palette <- colour_palette(plot_data$stage)
+      shape_palette <- shape_palette(plot_data$condition)
+      count_plot <- scatterplot_with_fill_and_shape(plot_data, x_var = 'sample_name', y_var = 'Counts', 
+                                                    fill_var = 'stage', fill_palette = col_palette, 
+                                                    shape_var = 'condition', shape_palette = shape_palette, 
+                                                    sample_names = FALSE) + theme(axis.text.x = element_text(angle = 90))
+      
+      return(count_plot)
     }
   })
 }
