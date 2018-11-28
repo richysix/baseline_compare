@@ -13,6 +13,9 @@ source(file.path('R', 'load_data.R'))
 source(file.path('R', 'deseq_functions.R'))
 source(file.path('R', 'helper_functions.R'))
 
+# set option to make datatables render NA values as a string
+options(htmlwidgets.TOJSON_ARGS = list(na = 'string'))
+
 # Server logic
 server <- function(input, output, session) {
   # load baseline data
@@ -356,11 +359,17 @@ server <- function(input, output, session) {
   output$results_table <- DT::renderDataTable({
     results_table <- deseq_results()[['merged_results']]
     if (!is.null(results_table)) {
-      return(as.data.frame(results_table))
+      results_dt <- datatable(as.data.frame(results_table),
+                              selection = 'single', rownames = FALSE,
+                              options = list(pageLength = 100)) %>%
+        formatStyle(c("padj.expt_only", "padj.plus_baseline", "padj.with_stage"), 
+                    backgroundColor = styleInterval(0.05, c('green', 'red')) ) %>%
+        formatStyle(c("log2FC.expt_only", "log2FC.plus_baseline", "log2FC.with_stage"),
+                    valueColumns = c("padj.expt_only", "padj.plus_baseline", "padj.with_stage"),
+                    backgroundColor = styleInterval(0.05, c('green', 'red')) )
+      return(results_dt)
     }
-  }, server = TRUE,
-  selection = 'single', rownames = FALSE,
-  options = list(pageLength = 100))
+  }, server = TRUE)
   
   observeEvent(input$results_table_rows_selected,{
       updateTabsetPanel(session, 'baseline_compare', selected = 'count_plot_panel')
