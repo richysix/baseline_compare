@@ -1,5 +1,6 @@
 library(shiny)
 library(shinyBS)
+library(DT)
 library(SummarizedExperiment)
 library(DESeq2)
 library(ggplot2)
@@ -20,7 +21,7 @@ server <- function(input, output, session) {
   
   # set testing and debugging options
   session$userData[['debug']] <- TRUE
-  session$userData[['testing']] <- FALSE
+  session$userData[['testing']] <- TRUE
   
   # load samples and counts files
   exptData <- reactive({
@@ -342,8 +343,35 @@ server <- function(input, output, session) {
   })
   
   # run DESeq2
-  
-  # overlap the 3 DE lists
+  deseq_results <- reactive({
+    deseq_datasets <- deseqDatasets()
+    if (!is.null(deseq_datasets)) {
+      deseq_results_3_ways <- 
+        overlap_deseq_results( deseq_datasets, 'hom', 'wt', session )
+      return(deseq_results_3_ways)
+    }
+  })
   
   # show results in results tab
+  output$results_table <- DT::renderDataTable({
+    results_table <- deseq_results()[['merged_results']]
+    if (!is.null(results_table)) {
+      return(as.data.frame(results_table))
+    }
+  }, server = TRUE,
+  selection = 'single', rownames = FALSE,
+  options = list(pageLength = 100))
+  
+  observeEvent(input$results_table_rows_selected,{
+      updateTabsetPanel(session, 'baseline_compare', selected = 'count_plot_panel')
+    },
+    priority = 1000
+  )
+  
+  output$count_plot_selected_gene <- renderText({
+    row_number <- input$results_table_rows_selected
+    if (!is.null(row_number)) {
+      return(row_number)
+    }
+  })
 }

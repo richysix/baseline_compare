@@ -6,7 +6,7 @@ library(shinyBS)
 # UI for application
 ui <- fluidPage(
   navbarPage(
-    "Baseline CompaRe",
+    "Baseline CompaRe", id = 'baseline_compare',
     selected = "file_input",
     tabPanel("Files", value = "file_input",
              sidebarLayout(
@@ -49,9 +49,9 @@ ui <- fluidPage(
                mainPanel(
                  width = 8,
                  fluidPage(
-                   fluidRow(bsAlert("input_file_alert")),
                    fluidRow(textOutput("pca_progress")),
-                   fluidRow(textOutput("deseq_progress"))
+                   fluidRow(textOutput("deseq_progress")),
+                   fluidRow(bsAlert("input_file_alert"))
                  )
                )
             )
@@ -113,9 +113,11 @@ ui <- fluidPage(
                )
              )
     ),
-    tabPanel("Results"
+    tabPanel("Results",
+             DT::dataTableOutput(outputId="results_table")
     ),
-    tabPanel("Count Plot"
+    tabPanel("Count Plot", value = 'count_plot_panel',
+      textOutput('count_plot_selected_gene')
     ),
     tabPanel("Help"
     )
