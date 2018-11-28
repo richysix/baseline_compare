@@ -15,57 +15,71 @@ colour_blind_palette <-
 
 #' Create a colour palette
 #'
-#' \code{colour_palette} takes a DESeq2DataSet object and creates a colour palette for the stage attribute
+#' \code{colour_palette} takes a factor and creates a colour palette
 #'
-#'    If the number of levels of the stage variable is more than available in the
+#'    If the number of levels of the factor is more than available in the
 #'    colour blind palette, the hue_pal function from the scales library is used
 #'    
-#' @param dds        DESeq2DataSet - colData must contain a column named 'stage'
+#' @param x factor
 #' 
-#' @return A named vector of colours for the levels of stage
+#' @return A named vector of colours for the levels of x
 #'
 #' @examples
-#' colour_palette(dds)
+#' colour_palette(colData(dds)$stage)
 #' 
-colour_palette <- function(dds) {
+colour_palette <- function(x) {
+  # check this is a factor
+  if (class(x) != 'factor') {
+    stop('Not a factor!')
+  }
   # check number of levels
-  num_colours <- nlevels(colData(dds)[['stage']])
+  num_colours <- nlevels(x)
   if (num_colours > length(colour_blind_palette)) {
     ord1 <- seq(1,num_colours,2)
     ord2 <- seq(2,num_colours,2)
     colour_palette <- hue_pal()(num_colours)[ order(c(ord1,ord2)) ]
-    names(colour_palette) <- levels(colData(dds)[['stage']])
+    names(colour_palette) <- levels(x)
   } else {
     colour_palette <- colour_blind_palette[seq_len(num_colours)]
-    names(colour_palette) <- levels(colData(dds)[['stage']])
+    names(colour_palette) <- levels(x)
   }
   return(colour_palette)
 }
 
 #' Create a shape palette
 #'
-#' \code{shape_palette} takes a DESeq2DataSet object and creates a palette of shapes
+#' \code{shape_palette} takes a factor and creates a palette of shapes
 #'
-#'    If the number of levels of the condition variable is more than shapes 
-#'    available (5) then an error is thrown. The baseline level is always a circle.
+#'    If the number of levels of the factor is more than shapes 
+#'    available (5) then an error is thrown. 
+#'    Also throws an error is one of the levels is not "baseline"
+#'    The "baseline" level is always a circle.
 #'    
-#' @param dds DESeq2DataSet - colData must contain a column named 'condition'
+#' @param x factor
 #' 
-#' @return A named vector of shape indices for the levels of condition
+#' @return A named vector of shape indices for the levels of x
 #'
 #' @examples
-#' shape_palette(dds)
+#' shape_palette(colData(dds)$condition)
 #' 
-shape_palette <- function(dds) {
+shape_palette <- function(x) {
+  # check this is a factor
+  if (class(x) != 'factor') {
+    stop('Not a factor!')
+  }
+  # check for "baseline" level
+  if (!('baseline' %in% x)) {
+    stop('None of the levels are "baseline"')
+  }
   # check number of levels
-  num_shapes <- nlevels(colData(dds)[['condition']])
+  num_shapes <- nlevels(x)
   shapes <- 21:25
-  if (num_shapes > length(shapes) + 1) {
+  if (num_shapes > length(shapes)) {
     # error message
     stop('There are two many levels of the condition variable to show with shapes')
   } else {
     shape_palette <- shapes[ seq_len(num_shapes) ]
-    names(shape_palette) = c('baseline', setdiff(levels(colData(dds)[['condition']]), c('baseline')))
+    names(shape_palette) = c('baseline', setdiff(levels(x), c('baseline')))
     return(shape_palette)
   }
 }
