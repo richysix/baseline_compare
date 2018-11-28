@@ -212,15 +212,16 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
   merged_data_tmp <- merge(merged_data_tmp, 
                            rowData(deseq_datasets[['expt_plus_baseline_dds']]),
                            by.x = 'Row.names', by.y = 'Gene.ID')
-  merged_data <- merged_data_tmp[ ,c('Name', "log2FoldChange.x", "padj.x", 
+  merged_data <- merged_data_tmp[ ,c('Row.names', 'Name', "log2FoldChange.x", "padj.x", 
                                      "log2FoldChange.y", "padj.y",
                                      "log2FoldChange", "padj",
-                                     "Description", "Chr", "Start", "End", "Strand" ) ]
-  rownames(merged_data) <- merged_data_tmp[, "Row.names"]
-  colnames(merged_data) <- c('Name', "log2FC.expt_only", "padj.expt_only", 
+                                     "Chr", "Start", "End", "Strand" ) ]
+  colnames(merged_data) <- c("Gene ID", "Name", "log2FC.expt_only", "padj.expt_only", 
                              "log2FC.plus_baseline", "padj.plus_baseline",
                              "log2FC.with_stage", "padj.with_stage",
-                             "Description", "Chr", "Start", "End", "Strand" )
+                             "Chr", "Start", "End", "Strand" )
+  merged_data[['Name']] <- as.character(merged_data[['Name']])
+  merged_data[['Chr']] <- as.character(merged_data[['Name']])
   
   return(
     list(
