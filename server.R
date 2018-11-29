@@ -26,6 +26,10 @@ server <- function(input, output, session) {
   # set testing and debugging options
   session$userData[['debug']] <- TRUE
   session$userData[['testing']] <- TRUE
+  # session <- list(userData = list(testing = TRUE, debug = TRUE))
+  
+  createAlert(session, anchorId = 'progress', alertId = 'progress_0',
+              content = 'Waiting for data upload...', dismiss = FALSE)
   
   # load samples and counts files
   exptData <- reactive({
@@ -52,6 +56,10 @@ server <- function(input, output, session) {
     }
     loaded_data <-
       load_data(sample_file, count_file, session)
+    # update alerts
+    closeAlert(session, 'progress_0')
+    createAlert(session, anchorId = 'progress', alertId = 'progress_1',
+                content = 'Experiment Data loaded.', dismiss = FALSE)
     return(loaded_data)
   })
   
@@ -153,7 +161,7 @@ server <- function(input, output, session) {
             create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
                                      groups = groups, condition_column = condition_column, 
                                      match_stages = TRUE, session_obj = session ))
-
+        
         return(
           list(
             expt_only_dds = expt_only_dds,
@@ -322,24 +330,68 @@ server <- function(input, output, session) {
   deseq_results <- reactive({
     deseq_datasets <- deseqDatasets()
     if (!is.null(deseq_datasets)) {
+      # update progress alert
+      createAlert(session, anchorId = 'deseq_progress', alertId = 'progress_4',
+                  content = 'Running DESeq2. This may take a while', dismiss = FALSE)
+      sig_level <- input$sig_level
       deseq_results_3_ways <- 
-        overlap_deseq_results( deseq_datasets, 'hom', 'wt', session )
+        overlap_deseq_results( deseq_datasets, expt_condition = 'hom', 
+                                ctrl_condition =  'wt', sig_level = sig_level,
+                                session_obj = session )
       return(deseq_results_3_ways)
+    }
+  })
+  
+  output$results_text <- renderText({
+    results <- deseq_results()
+    if (!is.null(results)) {
+      save(results, file = 'data/deseq_results_object.RData')
+      closeAlert(session, 'progress_4')
+      createAlert(session, anchorId = 'deseq_progress', alertId = 'progress_5',
+                  content = 'DESeq2 Finished', dismiss = FALSE)
+      return('DESeq2 Finished!')
     }
   })
   
   # show results in results tab
   output$results_table <- DT::renderDataTable({
-    results_table <- deseq_results()[['merged_results']]
-    if (!is.null(results_table)) {
-      results_dt <- datatable(as.data.frame(results_table),
-                              selection = 'single', rownames = FALSE,
-                              options = list(pageLength = 100)) %>%
-        formatStyle(c("padj.expt_only", "padj.plus_baseline", "padj.with_stage"), 
-                    backgroundColor = styleInterval(0.05, c('green', 'red')) ) %>%
-        formatStyle(c("log2FC.expt_only", "log2FC.plus_baseline", "log2FC.with_stage"),
-                    valueColumns = c("padj.expt_only", "padj.plus_baseline", "padj.with_stage"),
-                    backgroundColor = styleInterval(0.05, c('green', 'red')) )
+    results_source <- input$js_results_source[['results_source']]
+    results <- deseq_results()
+    if (!is.null(results) & !is.null(results_source)) {
+      if (session$userData[['debug']]) {
+        cat("Function: results_table\n")
+        print(results_source)
+        print(class(results))
+        print(length(results))
+        print(names(results))
+        print(class(results[['results_tables']]))
+        print(length(results[['results_tables']]))
+        print(names(results[['results_tables']]))
+      }
+      
+      results_table <- results[['results_tables']][[results_source]]
+      # create datatable, accounting for the different columns
+      # in unprocessed vs others
+      if (results_source == 'unprocessed') {
+        results_dt <- datatable(results_table,
+                                selection = 'single', rownames = FALSE,
+                                options = list(pageLength = 100)) %>%
+          formatStyle(c("padj"), 
+                      backgroundColor = styleInterval(0.05, c('green', 'red')) ) %>%
+          formatStyle(c("log2FC"),
+                      valueColumns = c("padj"),
+                      backgroundColor = styleInterval(0.05, c('green', 'red')) )
+        
+      } else {
+        results_dt <- datatable(results_table,
+                                selection = 'single', rownames = FALSE,
+                                options = list(pageLength = 100)) %>%
+          formatStyle(c("padj.expt_only", "padj.plus_baseline", "padj.with_stage"), 
+                      backgroundColor = styleInterval(0.05, c('green', 'red')) ) %>%
+          formatStyle(c("log2FC.expt_only", "log2FC.plus_baseline", "log2FC.with_stage"),
+                      valueColumns = c("padj.expt_only", "padj.plus_baseline", "padj.with_stage"),
+                      backgroundColor = styleInterval(0.05, c('green', 'red')) )
+      }
       return(results_dt)
     }
   }, server = TRUE)
@@ -352,20 +404,23 @@ server <- function(input, output, session) {
   
   output$count_plot_selected_gene <- renderPlot({
     row_number <- input$results_table_rows_selected
+    results_source <- input$js_results_source[['results_source']]
+    results <- deseq_results()
     if (!is.null(row_number)) {
       # get count data for gene
-      results_table <- deseq_results()[['merged_results']]
+      results_table <- results[['results_tables']][[results_source]]
       if( session$userData[['debug']] ) {
         print(row_number)
-        print(results_table)
-      }  
+        print(head(results_table))
+      }
       gene_id <- results_table[ row_number, 'Gene.ID' ]
-      expt_plus_baseline <- deseq_results()[['plus_baseline_res']]
+      expt_plus_baseline <- results[['plus_baseline_res']]
       counts <- counts(expt_plus_baseline[['deseq']], normalized = TRUE)[ gene_id, ]
       counts_m <- melt(counts, value.name = 'Counts')
       plot_data <- as.data.frame(merge(counts_m, colData(expt_plus_baseline[['deseq']]), by = 'row.names'))
       
       if( session$userData[['debug']] ) {
+        print(counts)
         print(head(plot_data))
       }
       

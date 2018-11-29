@@ -5,11 +5,13 @@ library(shinyBS)
 
 # UI for application
 ui <- fluidPage(
+  tags$head( includeScript('www/results_table.js') ),
   navbarPage(
     "Baseline CompaRe", id = 'baseline_compare',
     selected = "file_input",
     tabPanel("Files", value = "file_input",
              sidebarLayout(
+               position = 'right',
                sidebarPanel(
                  width = 4,
                  fileInput('sample_file', 'Load Sample File'),
@@ -17,6 +19,8 @@ ui <- fluidPage(
                  checkboxInput("demo_data", 
                                label = 'Use Demo data',
                                value = FALSE),
+                 numericInput(inputId = 'sig_level', label = 'Threshold for statistical significance', 
+                              value = 0.05, min = 0, max = 1, step = 0.01, width = NULL),
                  actionButton('analyse_data', 'Analyse Data', icon = NULL, width = NULL),
                  hr(),
                  # options
@@ -49,25 +53,36 @@ ui <- fluidPage(
                mainPanel(
                  width = 8,
                  fluidPage(
-                   fluidRow(textOutput("pca_progress")),
-                   fluidRow(textOutput("deseq_progress")),
-                   fluidRow(bsAlert("input_file_alert"))
+                   fluidRow(
+                     tags$div(class = "well",
+                              h3('Instructions'),
+                              p('Instruction text goes here'))
+                   ),
+                   fluidRow(
+                      h3('Progress'),
+                      tags$div(class = "well",
+                                bsAlert("progress")),
+                      tags$div(class = "well", textOutput('results_text'))
+                   ),
+                   fluidRow(
+                      bsAlert("input_file_alert")
+                   )
                  )
                )
             )
     ),
     tabPanel("PCA", value = "pca_panel",
              fluidPage(
+               fluidRow(h2('Principal Component Analysis')),
                fluidRow(
                  sidebarLayout(
                    mainPanel(
-                     fluidPage(
-                       withSpinner(plotOutput("pca_plot_reduced", height = "480px")),
-                       withSpinner(plotOutput("pca_plot_all", height = "480px"))
-                     ),
-                     width = 9
+                      width = 9,
+                      withSpinner(plotOutput("pca_plot_reduced", height = "480px")),
+                      withSpinner(plotOutput("pca_plot_all", height = "480px"))
                    ),
                    sidebarPanel(
+                     width = 3,
                      h5("PCA Options"),
                      # checkbox for displaying sample names
                      checkboxInput("sample_names", 
@@ -106,15 +121,37 @@ ui <- fluidPage(
                      ),
                      downloadButton('download_current', 'Download Current Plot'),
                      downloadButton('download_all', 'Download all (pdf)'),
-                     downloadButton('download_rda', 'Download rda file of plot'),
-                     width = 3
+                     downloadButton('download_rda', 'Download rda file of plot')
                    )
                  )
                )
              )
     ),
     tabPanel("Results",
-             DT::dataTableOutput(outputId="results_table")
+             fluidPage(
+               fluidRow(
+                 tags$div(class = "well",
+                        bsAlert("deseq_progress"))
+               ),
+               fluidRow(
+                 column(width = 3,
+                        img(src = 'images/unprocessed_icon_150.png', class = 'results_button', 
+                            id = "unprocessed", width = 240),
+                        img(src = 'images/mutant_response_icon_150.png', class = 'results_button', 
+                            id = "mutant_response", width = 240),
+                        img(src = 'images/delay_icon_150.png', class = 'results_button', 
+                            id = "delay", width = 240),
+                        img(src = 'images/no_delay_icon_150.png', class = 'results_button', 
+                            id = "no_delay", width = 240),
+                        img(src = 'images/discard_icon_150.png', class = 'results_button', 
+                            id = "discard", width = 240),
+                        p(class = 'results_button', id = 'all_genes')
+                 ),
+                 column( width = 9,
+                   DT::dataTableOutput(outputId="results_table")
+                 )
+               )
+             )
     ),
     tabPanel("Count Plot", value = 'count_plot_panel',
       plotOutput('count_plot_selected_gene')
