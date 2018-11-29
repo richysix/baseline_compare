@@ -167,57 +167,85 @@ server <- function(input, output, session) {
   })
   
   # run PCA with just match baseline samples for speed
-  pca_info <- reactiveValues()
-  output$pca_progress <- renderText({
-    expt_data <- exptData()
+  pca_info <- reactive({
     deseq_datasets <- deseqDatasets()
-    if (is.null(expt_data)) {
-      return('Loading Data ...')
+    if (is.null(deseq_datasets)) {
+      return(NULL)
     } else {
-      if (is.null(deseq_datasets)) {
-        return('Experiment Data loaded.')
-      } else {
-        if (session$userData[['debug']]) {
-          print('Function: run_pca')
-          print('Variance Stabilizing Transform begin...')
-        }
-        # Create a Progress object
-        progress <- shiny::Progress$new(session)
-        # Make sure it closes when we exit this reactive, even if there's an error
-        on.exit(progress$close())
-        
-        progress$set(message = "Calculating PCA...",
-                     detail = 'This will depend on the number of samples', value = 0.3)
-        
-        dds_vst <- varianceStabilizingTransformation(deseq_datasets[['expt_plus_baseline_dds']], blind=TRUE)
-        
-        progress$set(value = 1)
-        if (session$userData[['debug']]) {
-          cat('Variance Stabilizing Transform done.\n')
-        }
-        
-        pca <- prcomp( t( assay(dds_vst) ) )
-        pca_info[['pca']] <- pca
-        pca_info[['propVarPC']] <- pca$sdev^2 / sum( pca$sdev^2 )
-        aload <- abs(pca$rotation)
-        pca_info[['propVarRegion']] <- sweep(aload, 2, colSums(aload), "/")
-        pca_info[['dds_vst']] <- dds_vst
-        return("PCA completed.")
+      if (session$userData[['debug']]) {
+        cat('Function: pca_info\n')
+        cat('Variance Stabilizing Transform begin...\n')
       }
+      # update progress alert
+      closeAlert(session, 'progress_1')
+      createAlert(session, anchorId = 'progress', alertId = 'progress_2',
+                  content = 'Calculating PCA...', dismiss = FALSE)
+      
+      # Create a Progress object
+      progress <- shiny::Progress$new(session)
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      
+      progress$set(message = "Calculating PCA...",
+                   detail = 'This will depend on the number of samples', value = 0.3)
+      
+      dds_vst <- varianceStabilizingTransformation(deseq_datasets[['expt_plus_baseline_dds']], blind=TRUE)
+      
+      progress$set(value = 0.5)
+      
+      if (session$userData[['debug']]) {
+        cat('Variance Stabilizing Transform done.\n')
+      }
+      
+      info <- list()
+      pca <- prcomp( t( assay(dds_vst) ) )
+      info[['subset']][['pca']] <- pca
+      info[['subset']][['propVarPC']] <- pca$sdev^2 / sum( pca$sdev^2 )
+      aload <- abs(pca$rotation)
+      info[['subset']][['propVarRegion']] <- sweep(aload, 2, colSums(aload), "/")
+      info[['subset']][['dds_vst']] <- dds_vst
+      
+      if (session$userData[['debug']]) {
+        cat('Function: pca_info, all samples\n')
+        cat('Variance Stabilizing Transform begin...\n')
+      }
+      
+      expt_plus_all_baseline_dds_vst <- 
+        varianceStabilizingTransformation(deseq_datasets[['expt_plus_all_baseline_dds']], blind=TRUE)
+      
+      if (session$userData[['debug']]) {
+        cat('Variance Stabilizing Transform done.\n')
+      }
+      
+      pca <- prcomp( t( assay(expt_plus_all_baseline_dds_vst) ) )
+      info[['all']][['pca']] <- pca
+      info[['all']][['propVarPC']] <- pca$sdev^2 / sum( pca$sdev^2 )
+      aload <- abs(pca$rotation)
+      info[['all']][['propVarRegion']] <- sweep(aload, 2, colSums(aload), "/")
+      info[['all']][['dds_vst']] <- expt_plus_all_baseline_dds_vst
+      
+      progress$set(value = 1)
+      
+      # update progress alert
+      closeAlert(session, 'progress_2')
+      createAlert(session, anchorId = 'progress', alertId = 'progress_3',
+                  content = 'PCA Finished', dismiss = FALSE)
+      
+      return(info)
     }
   })
 
   pcs <- reactive({
+    info <- pca_info()
     if (session$userData[['debug']]) {
       cat("Function: pcs\n")
     }
-    pca_info <- pca_info
-    if(is.null(pca_info)) {
+    if(is.null(info)) {
       return(NULL)
     } else {
       # return names of columns that contribute > 1% of variance
-      pca <- pca_info[['pca']]
-      return(colnames(pca[['x']])[ pca_info[['propVarPC']] > 0.01 ])
+      pca <- info[['subset']][['pca']]
+      return(colnames(pca[['x']])[ info[['subset']][['propVarPC']] > 0.01 ])
     }
   })
   
@@ -244,105 +272,49 @@ server <- function(input, output, session) {
     }
   })
   
-  pca_plot_data <- reactive({
-    pca_info <- reactiveValuesToList(pca_info)
-    if (is.null(pca_info[['pca']])) {
-      return(NULL)
-    } else {
-      dds_vst <- pca_info[['dds_vst']]
-      pca <- pca_info[['pca']]
-      plot_data <- cbind( pca[['x']], as.data.frame(colData(dds_vst)) )
-      return(plot_data)
-    }
-  })
-  
   # render PCA plot
   output$pca_plot_reduced <- renderPlot({
-    plot_data <- pca_plot_data()
-    if (is.null(plot_data)) {
+    pca_info <- pca_info()
+    if (is.null(pca_info)) {
       return(NULL)
     } else {
-      dds_vst <- pca_info[['dds_vst']]
-      if (is.null(dds_vst)) {
-        return(NULL)
-      } else {
-        col_palette <- colour_palette(colData(dds_vst)[['stage']])
-        shape_palette <- shape_palette(colData(dds_vst)[['condition']])
-        if (session$userData[['debug']]) {
-          print(shape_palette)
-        }
-        pca_plot <- 
-          scatterplot_with_fill_and_shape(
-            plot_data, input$x_axis_pc, input$y_axis_pc, 
-            fill_var = 'stage', fill_palette = col_palette,
-            shape_var = 'condition', shape_palette = shape_palette,
-            sample_names = input$sample_names)
-  
-        return(pca_plot)
-      }
-    }
-  })
-  
-  pca_info_all <- reactiveValues()
-  observer_a <- observe({
-    expt_data <- exptData()
-    deseq_datasets <- deseqDatasets()
-    if (is.null(deseq_datasets)) {
-      return(NULL)
-    } else {
+      dds_vst <- pca_info[['subset']][['dds_vst']]
+      pca <- pca_info[['subset']][['pca']]
+      plot_data <- cbind( pca[['x']], as.data.frame(colData(dds_vst)) )
+      col_palette <- colour_palette(colData(dds_vst)[['stage']])
+      shape_palette <- shape_palette(colData(dds_vst)[['condition']])
       if (session$userData[['debug']]) {
-        print('Function: run_pca_all')
-        print('Variance Stabilizing Transform begin...')
+        print(shape_palette)
       }
+      pca_plot <- 
+        scatterplot_with_fill_and_shape(
+          plot_data, input$x_axis_pc, input$y_axis_pc, 
+          fill_var = 'stage', fill_palette = col_palette,
+          shape_var = 'condition', shape_palette = shape_palette,
+          sample_names = input$sample_names)
       
-      expt_plus_all_baseline_dds_vst <- 
-        varianceStabilizingTransformation(deseq_datasets[['expt_plus_all_baseline_dds']], blind=TRUE)
-      
-      if (session$userData[['debug']]) {
-        cat('Variance Stabilizing Transform done.\n')
-      }
-      
-      pca <- prcomp( t( assay(expt_plus_all_baseline_dds_vst) ) )
-      pca_info_all[['pca']] <- pca
-      pca_info_all[['propVarPC']] <- pca$sdev^2 / sum( pca$sdev^2 )
-      aload <- abs(pca$rotation)
-      pca_info_all[['propVarRegion']] <- sweep(aload, 2, colSums(aload), "/")
-      pca_info_all[['dds_vst']] <- expt_plus_all_baseline_dds_vst
-    }
-  }, priority = -1000)
-  
-  pca_plot_data_all <- reactive({
-    pca_info <- reactiveValuesToList(pca_info_all)
-    if (is.null(pca_info[['pca']])) {
-      return(NULL)
-    } else {
-      expt_plus_all_baseline_dds_vst <- pca_info[['dds_vst']]
-      pca <- pca_info[['pca']]
-      plot_data <- cbind( pca[['x']], as.data.frame(colData(expt_plus_all_baseline_dds_vst)) )
-      return(plot_data)
+      return(pca_plot)
     }
   })
   
   output$pca_plot_all <- renderPlot({
-    plot_data <- pca_plot_data_all()
-    if (is.null(plot_data)) {
+    pca_info <- pca_info()
+    if (is.null(pca_info)) {
       return(NULL)
     } else {
-      expt_plus_all_baseline_dds <- pca_info_all[['dds_vst']]
-      if (is.null(expt_plus_all_baseline_dds)) {
-        return(NULL)
-      } else {
-        col_palette <- colour_palette(colData(expt_plus_all_baseline_dds)[['stage']])
-        shape_palette <- shape_palette(colData(expt_plus_all_baseline_dds)[['condition']])
-        pca_plot <- 
-          scatterplot_with_fill_and_shape(
-            plot_data, input$x_axis_pc, input$y_axis_pc, 
-            fill_var = 'stage', fill_palette = col_palette,
-            shape_var = 'condition', shape_palette = shape_palette,
-            sample_names = input$sample_names)
-        
-        return(pca_plot)
-      }
+      expt_plus_all_baseline_dds <- pca_info[['all']][['dds_vst']]
+      pca <- pca_info[['all']][['pca']]
+      plot_data <- cbind( pca[['x']], as.data.frame(colData(expt_plus_all_baseline_dds)) )
+      col_palette <- colour_palette(colData(expt_plus_all_baseline_dds)[['stage']])
+      shape_palette <- shape_palette(colData(expt_plus_all_baseline_dds)[['condition']])
+      pca_plot <- 
+        scatterplot_with_fill_and_shape(
+          plot_data, input$x_axis_pc, input$y_axis_pc, 
+          fill_var = 'stage', fill_palette = col_palette,
+          shape_var = 'condition', shape_palette = shape_palette,
+          sample_names = input$sample_names)
+      
+      return(pca_plot)
     }
   })
   
