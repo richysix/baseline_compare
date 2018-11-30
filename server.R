@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyjs)
 library(shinyBS)
 library(DT)
 library(SummarizedExperiment)
@@ -345,17 +346,29 @@ server <- function(input, output, session) {
   output$results_text <- renderText({
     results <- deseq_results()
     if (!is.null(results)) {
-      save(results, file = 'data/deseq_results_object.RData')
+      # save(results, file = 'data/deseq_results_object.RData')
       closeAlert(session, 'progress_4')
-      createAlert(session, anchorId = 'deseq_progress', alertId = 'progress_5',
+      closeAlert(session, 'progress_5')
+      createAlert(session, anchorId = 'deseq_progress_1', alertId = 'progress_6',
                   content = 'DESeq2 Finished', dismiss = FALSE)
-      return('DESeq2 Finished!')
+      createAlert(session, anchorId = 'deseq_progress_2', alertId = 'progress_7',
+                  title = 'DESeq Analysis',
+                  content = 'DESeq2 Finished', dismiss = TRUE)
+      return('')
     }
   })
   
   # show results in results tab
+  resultsSource <- reactiveVal()
+  observeEvent(input$mutant_response, { resultsSource('mutant_response') })
+  observeEvent(input$delay, { resultsSource('delay') })
+  observeEvent(input$no_delay, { resultsSource('no_delay') })
+  observeEvent(input$discard, { resultsSource('discard') })
+  observeEvent(input$unprocessed, { resultsSource('unprocessed') })
+  observeEvent(input$all_genes, { resultsSource('all_genes') })
+  
   output$results_table <- DT::renderDataTable({
-    results_source <- input$js_results_source[['results_source']]
+    results_source <- resultsSource()
     results <- deseq_results()
     if (!is.null(results) & !is.null(results_source)) {
       if (session$userData[['debug']]) {
@@ -404,9 +417,10 @@ server <- function(input, output, session) {
   
   output$count_plot_selected_gene <- renderPlot({
     row_number <- input$results_table_rows_selected
-    results_source <- input$js_results_source[['results_source']]
+    results_source <- resultsSource()
     results <- deseq_results()
     if (!is.null(row_number)) {
+      closeAlert(session, 'count_plot_instructions')
       # get count data for gene
       results_table <- results[['results_tables']][[results_source]]
       if( session$userData[['debug']] ) {

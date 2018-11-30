@@ -5,6 +5,7 @@ library(shinyBS)
 
 # UI for application
 ui <- fluidPage(
+  useShinyjs(),
   tags$head( includeScript('www/results_table.js') ),
   navbarPage(
     "Baseline CompaRe", id = 'baseline_compare',
@@ -129,23 +130,16 @@ ui <- fluidPage(
     ),
     tabPanel("Results",
              fluidPage(
-               fluidRow(
-                 tags$div(class = "well",
-                        bsAlert("deseq_progress"))
-               ),
+               fluidRow(bsAlert("deseq_progress_2")),
                fluidRow(
                  column(width = 3,
-                        img(src = 'images/unprocessed_icon_150.png', class = 'results_button', 
-                            id = "unprocessed", width = 240),
-                        img(src = 'images/mutant_response_icon_150.png', class = 'results_button', 
-                            id = "mutant_response", width = 240),
-                        img(src = 'images/delay_icon_150.png', class = 'results_button', 
-                            id = "delay", width = 240),
-                        img(src = 'images/no_delay_icon_150.png', class = 'results_button', 
-                            id = "no_delay", width = 240),
-                        img(src = 'images/discard_icon_150.png', class = 'results_button', 
-                            id = "discard", width = 240),
-                        p(class = 'results_button', id = 'all_genes')
+                        actionButton('mutant_response', 'Mutant Response', width = '200px'),
+                        actionButton('delay', 'Delay', width = '200px'),
+                        actionButton('no_delay', 'No Delay', width = '200px'),
+                        actionButton('discard', 'Discard', width = '200px'),
+                        hr(),
+                        actionButton('unprocessed', 'Experiment Samples only', width = '200px'),
+                        actionButton('all_genes', 'All Genes', width = '200px')
                  ),
                  column( width = 9,
                    DT::dataTableOutput(outputId="results_table")
