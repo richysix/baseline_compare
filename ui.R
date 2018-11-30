@@ -37,9 +37,9 @@ ui <- fluidPage(
                  ),
                  # use gender, needs name of gender column as well
                  br(),
-                 h5("Gender"),
+                 h5("Sex"),
                  checkboxInput("use_gender", 
-                               label = 'Use gender information',
+                               label = 'Use sex information in DESeq',
                                value = TRUE),
                  radioButtons(
                    "sex_var",
@@ -62,8 +62,12 @@ ui <- fluidPage(
                    fluidRow(
                       h3('Progress'),
                       tags$div(class = "well",
-                                bsAlert("progress")),
-                      tags$div(class = "well", textOutput('results_text'))
+                        bsAlert("progress"),
+                        bsAlert("deseq_progress_1"),
+                        tags$div(id = 'deseq_results_text',
+                          textOutput('results_text')
+                        )
+                      )
                    ),
                    fluidRow(
                       bsAlert("input_file_alert")
@@ -79,7 +83,9 @@ ui <- fluidPage(
                  sidebarLayout(
                    mainPanel(
                       width = 9,
+                      h3('PCA: Baseline sample for experimental stages included'),
                       withSpinner(plotOutput("pca_plot_reduced", height = "480px")),
+                      h3('PCA: All Baseline samples included'),
                       withSpinner(plotOutput("pca_plot_all", height = "480px"))
                    ),
                    sidebarPanel(
@@ -148,6 +154,7 @@ ui <- fluidPage(
              )
     ),
     tabPanel("Count Plot", value = 'count_plot_panel',
+      bsAlert("count_plot_alert"),
       plotOutput('count_plot_selected_gene')
     ),
     tabPanel("Help"

@@ -29,8 +29,15 @@ server <- function(input, output, session) {
   session$userData[['testing']] <- TRUE
   # session <- list(userData = list(testing = TRUE, debug = TRUE))
   
+  # create initial alerts
   createAlert(session, anchorId = 'progress', alertId = 'progress_0',
               content = 'Waiting for data upload...', dismiss = FALSE)
+  createAlert(session, anchorId = 'count_plot_alert', alertId = 'count_plot_instructions',
+              title = 'Instructions', style = 'info',
+              content = 'Click on a row in the Results table to see a plot of the normalised counts for each sample')
+  createAlert(session, anchorId = 'deseq_progress_2', alertId = 'deseq_not_started',
+              title = 'DESeq2 Analysis', style = 'info',
+              content = 'DESeq is not running yet. Check the "Files" tab.')
   
   # load samples and counts files
   exptData <- reactive({
@@ -196,7 +203,7 @@ server <- function(input, output, session) {
       on.exit(progress$close())
       
       progress$set(message = "Calculating PCA...",
-                   detail = 'This will depend on the number of samples', value = 0.3)
+                   detail = 'This will depend on the number of samples', value = 0.2)
       
       dds_vst <- varianceStabilizingTransformation(deseq_datasets[['expt_plus_baseline_dds']], blind=TRUE)
       
@@ -332,7 +339,11 @@ server <- function(input, output, session) {
     deseq_datasets <- deseqDatasets()
     if (!is.null(deseq_datasets)) {
       # update progress alert
-      createAlert(session, anchorId = 'deseq_progress', alertId = 'progress_4',
+      createAlert(session, anchorId = 'deseq_progress_1', alertId = 'progress_4',
+                  content = 'Running DESeq2...', dismiss = FALSE)
+      closeAlert(session, 'deseq_not_started')
+      createAlert(session, anchorId = 'deseq_progress_2', alertId = 'progress_5',
+                  title = 'DESeq2 Analysis',
                   content = 'Running DESeq2. This may take a while', dismiss = FALSE)
       sig_level <- input$sig_level
       deseq_results_3_ways <- 
@@ -390,20 +401,20 @@ server <- function(input, output, session) {
                                 selection = 'single', rownames = FALSE,
                                 options = list(pageLength = 100)) %>%
           formatStyle(c("padj"), 
-                      backgroundColor = styleInterval(0.05, c('green', 'red')) ) %>%
+                      backgroundColor = styleInterval(0.05, c('white', '#C0C0C0')) ) %>%
           formatStyle(c("log2FC"),
                       valueColumns = c("padj"),
-                      backgroundColor = styleInterval(0.05, c('green', 'red')) )
+                      backgroundColor = styleInterval(0.05, c('white', '#C0C0C0')) )
         
       } else {
         results_dt <- datatable(results_table,
                                 selection = 'single', rownames = FALSE,
                                 options = list(pageLength = 100)) %>%
           formatStyle(c("padj.expt_only", "padj.plus_baseline", "padj.with_stage"), 
-                      backgroundColor = styleInterval(0.05, c('green', 'red')) ) %>%
+                      backgroundColor = styleInterval(0.05, c('white', '#C0C0C0')) ) %>%
           formatStyle(c("log2FC.expt_only", "log2FC.plus_baseline", "log2FC.with_stage"),
                       valueColumns = c("padj.expt_only", "padj.plus_baseline", "padj.with_stage"),
-                      backgroundColor = styleInterval(0.05, c('green', 'red')) )
+                      backgroundColor = styleInterval(0.05, c('white', '#C0C0C0')) )
       }
       return(results_dt)
     }
