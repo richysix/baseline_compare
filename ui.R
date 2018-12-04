@@ -6,7 +6,9 @@ library(shinyBS)
 # UI for application
 ui <- fluidPage(
   useShinyjs(),
-  tags$head( includeScript('www/results_table.js') ),
+  tags$head( includeScript('www/results_table.js'),
+             includeScript('www/files.js'),
+             includeCSS('www/baseline_compare.css') ),
   navbarPage(
     "Baseline CompaRe", id = 'baseline_compare',
     selected = "file_input",
@@ -56,8 +58,8 @@ ui <- fluidPage(
                  fluidPage(
                    fluidRow(
                      tags$div(class = "well",
-                              h3('Instructions'),
-                              p('Instruction text goes here'))
+                        includeHTML('www/front_page_intro.html')
+                     )
                    ),
                    fluidRow(
                       h3('Progress'),
@@ -157,7 +159,8 @@ ui <- fluidPage(
       bsAlert("count_plot_alert"),
       plotOutput('count_plot_selected_gene')
     ),
-    tabPanel("Help"
+    tabPanel("Help", value = 'help_panel',
+             includeMarkdown('README.md')
     )
   )
 )
