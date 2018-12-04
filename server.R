@@ -9,6 +9,7 @@ library(scales)
 library(shinyMisc)
 library(biovisr)
 library(reshape2)
+library(svglite)
 
 # source functions
 source(file.path('R', 'load_data.R'))
@@ -288,8 +289,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # render PCA plot
-  output$pca_plot_reduced <- renderPlot({
+  pcaPlotDataReduced <- reactive({
     pca_info <- pca_info()
     if (is.null(pca_info)) {
       return(NULL)
@@ -297,9 +297,19 @@ server <- function(input, output, session) {
       dds_vst <- pca_info[['subset']][['dds_vst']]
       pca <- pca_info[['subset']][['pca']]
       plot_data <- cbind( pca[['x']], as.data.frame(colData(dds_vst)) )
-      col_palette <- colour_palette(colData(dds_vst)[['stage']])
-      shape_palette <- shape_palette(colData(dds_vst)[['condition']])
+      return(plot_data)
+    }
+  })
+  
+  pcaPlotReduced <- reactive({
+    plot_data <- pcaPlotDataReduced()
+    if(is.null(plot_data)) {
+      return(NULL)
+    } else {
+      col_palette <- colour_palette(plot_data[['stage']])
+      shape_palette <- shape_palette(plot_data[['condition']])
       if (session$userData[['debug']]) {
+        print(col_palette)
         print(shape_palette)
       }
       pca_plot <- 
@@ -313,7 +323,74 @@ server <- function(input, output, session) {
     }
   })
   
-  output$pca_plot_all <- renderPlot({
+  # render PCA plot
+  output$pca_plot_reduced <- renderPlot({
+    return(pcaPlotReduced())
+  })
+  
+  # for downloading the plot as a pdf/png
+  output$download_current_pca_reduced <- downloadHandler(
+    filename = function() {
+      paste('pca_plot', Sys.Date(), input$plot_format_reduced, sep = '.')
+    },
+    content = function(file) {
+      if (input$plot_format_reduced == "pdf") {
+        pdf(file, paper = "special", height = 7, width = 10) # open the pdf device
+      } else if (input$plot_format_reduced == "eps") {
+        postscript(file, paper = "special", height = 7, width = 10) # open the postscript device
+      } else if (input$plot_format_reduced == "svg") {
+        svglite(file, height = 7, width = 10) # open the svg device
+      } else if (input$plot_format_reduced == "png") {
+        png(file, height = 480, width = 960, res = 100) # open the png device
+      } else {
+        pdf(file, paper = "special", height = 7, width = 10) # open the pdf device
+      }
+      print(pcaPlotReduced())
+      dev.off()  # close device
+    },
+    contentType = paste0('image/', input$plot_format_reduced)
+  )
+  
+  # download an rda file of the current plot
+  output$download_rda_pca_reduced <- downloadHandler(
+    filename = function() {
+      paste('pca_plot', Sys.Date(), 'rda', sep = '.')
+    },
+    content = function(file) {
+      pca_plot <- pcaPlotReduced()
+      save(pca_plot, file = file)
+    }
+  )
+  
+  # for downloading a pdf of each component plotted against the next one
+  output$download_all_pca_reduced <- downloadHandler(
+    filename = function() {
+      paste('pca_plot-allPCs', Sys.Date(), 'pdf', sep = '.')
+    },
+    content = function(file) {
+      pdf(file, paper = "special", height = 7, width = 10) # open the pdf device
+      
+      plot_data <- pcaPlotDataReduced()
+      col_palette <- colour_palette(plot_data[['stage']])
+      shape_palette <- shape_palette(plot_data[['condition']])
+      components <- pcs()
+      for (i in seq.int(length(components) - 1)) {
+        first <- components[i]
+        second <- components[i + 1]
+        pca_plot <- 
+          scatterplot_with_fill_and_shape(
+            plot_data, first, second, 
+            fill_var = 'stage', fill_palette = col_palette,
+            shape_var = 'condition', shape_palette = shape_palette,
+            sample_names = input$sample_names)
+        print(pca_plot)
+      }
+      dev.off()  # close device
+    },
+    contentType = 'image/pdf'
+  )
+  
+  pcaPlotDataAll <- reactive({
     pca_info <- pca_info()
     if (is.null(pca_info)) {
       return(NULL)
@@ -321,18 +398,92 @@ server <- function(input, output, session) {
       expt_plus_all_baseline_dds <- pca_info[['all']][['dds_vst']]
       pca <- pca_info[['all']][['pca']]
       plot_data <- cbind( pca[['x']], as.data.frame(colData(expt_plus_all_baseline_dds)) )
-      col_palette <- colour_palette(colData(expt_plus_all_baseline_dds)[['stage']])
-      shape_palette <- shape_palette(colData(expt_plus_all_baseline_dds)[['condition']])
+      return(plot_data)
+    }
+  })
+  
+  pcaPlotAll <- reactive({
+    plot_data <- pcaPlotDataAll()
+    if (is.null(plot_data)) {
+      return(NULL)
+    } else {
+      col_palette <- colour_palette(plot_data[['stage']])
+      shape_palette <- shape_palette(plot_data[['condition']])
       pca_plot <- 
         scatterplot_with_fill_and_shape(
           plot_data, input$x_axis_pc, input$y_axis_pc, 
           fill_var = 'stage', fill_palette = col_palette,
           shape_var = 'condition', shape_palette = shape_palette,
           sample_names = input$sample_names)
-      
       return(pca_plot)
     }
   })
+  
+  output$pca_plot_all <- renderPlot({
+    return(pcaPlotAll())
+  })
+  
+  # for downloading the plot as a pdf/png
+  output$download_current_pca_all <- downloadHandler(
+    filename = function() {
+      paste('pca_plot_all', Sys.Date(), input$plot_format_all, sep = '.')
+    },
+    content = function(file) {
+      if (input$plot_format_all == "pdf") {
+        pdf(file, paper = "special", height = 7, width = 10) # open the pdf device
+      } else if (input$plot_format_all == "eps") {
+        postscript(file, paper = "special", height = 7, width = 10) # open the postscript device
+      } else if (input$plot_format_all == "svg") {
+        svglite(file, height = 7, width = 10) # open the svg device
+      } else if (input$plot_format_all == "png") {
+        png(file, height = 480, width = 960, res = 100) # open the png device
+      } else {
+        pdf(file, paper = "special", height = 7, width = 10) # open the pdf device
+      }
+      print(pcaPlotAll())
+      dev.off()  # close device
+    },
+    contentType = paste0('image/', input$plot_format_all)
+  )
+  
+  # download an rda file of the current plot
+  output$download_rda_pca_all <- downloadHandler(
+    filename = function() {
+      paste('pca_plot_all', Sys.Date(), 'rda', sep = '.')
+    },
+    content = function(file) {
+      pca_plot <- pcaPlotAll()
+      save(pca_plot, file = file)
+    }
+  )
+  
+  # for downloading a pdf of each component plotted against the next one
+  output$download_all_pca_all <- downloadHandler(
+    filename = function() {
+      paste('pca_plot_all-allPCs', Sys.Date(), 'pdf', sep = '.')
+    },
+    content = function(file) {
+      pdf(file, paper = "special", height = 7, width = 10) # open the pdf device
+      
+      plot_data <- pcaPlotDataAll()
+      col_palette <- colour_palette(plot_data[['stage']])
+      shape_palette <- shape_palette(plot_data[['condition']])
+      components <- pcs()
+      for (i in seq.int(length(components) - 1)) {
+        first <- components[i]
+        second <- components[i + 1]
+        pca_plot <- 
+          scatterplot_with_fill_and_shape(
+            plot_data, first, second, 
+            fill_var = 'stage', fill_palette = col_palette,
+            shape_var = 'condition', shape_palette = shape_palette,
+            sample_names = input$sample_names)
+        print(pca_plot)
+      }
+      dev.off()  # close device
+    },
+    contentType = 'image/pdf'
+  )
   
   # run DESeq2
   deseq_results <- reactive({

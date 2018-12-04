@@ -87,8 +87,49 @@ ui <- fluidPage(
                       width = 9,
                       h3('PCA: Baseline sample for experimental stages included'),
                       withSpinner(plotOutput("pca_plot_reduced", height = "480px")),
+                      h4('Download'),
+                      fluidRow(
+                        column( width = 4,
+                          radioButtons(
+                          "plot_format_reduced",
+                          label = NULL,
+                          choices = list('pdf' = 'pdf', 
+                                         'eps' = 'eps',
+                                         'svg' = 'svg',
+                                         'png' = 'png'),
+                          selected = 'pdf',
+                          inline = TRUE
+                          ),
+                          downloadButton('download_current_pca_reduced', 'Download Current Plot')
+                        ),
+                        column( width = 8,
+                          downloadButton('download_rda_pca_reduced', 'Download rda file of plot'),
+                          downloadButton('download_all_pca_reduced', 'Download all PCs (pdf)')
+                        )
+                      ),
                       h3('PCA: All Baseline samples included'),
-                      withSpinner(plotOutput("pca_plot_all", height = "480px"))
+                      withSpinner(plotOutput("pca_plot_all", height = "480px")),
+                      h4('Download'),
+                      fluidRow(
+                        column( width = 4,
+                                radioButtons(
+                                  "plot_format_all",
+                                  label = NULL,
+                                  choices = list('pdf' = 'pdf', 
+                                                 'eps' = 'eps',
+                                                 'svg' = 'svg',
+                                                 'png' = 'png'),
+                                  selected = 'pdf',
+                                  inline = TRUE
+                                ),
+                                downloadButton('download_current_pca_all', 'Download Current Plot')
+                        ),
+                        column( width = 8,
+                                downloadButton('download_rda_pca_all', 'Download rda file of plot'),
+                                downloadButton('download_all_pca_all', 'Download all PCs (pdf)')
+                        )
+                      ),
+                      hr()
                    ),
                    sidebarPanel(
                      width = 3,
@@ -117,20 +158,7 @@ ui <- fluidPage(
                          "PC2" = "PC2"
                        ),
                        selected = 2
-                     ),
-                     h4('Downloads'),
-                     radioButtons(
-                       "plotFormat",
-                       label = h5("Plot File"),
-                       choices = list('pdf' = 'pdf', 
-                                      'eps' = 'eps',
-                                      'svg' = 'svg',
-                                      'png' = 'png'),
-                       selected = 'pdf'
-                     ),
-                     downloadButton('download_current', 'Download Current Plot'),
-                     downloadButton('download_all', 'Download all (pdf)'),
-                     downloadButton('download_rda', 'Download rda file of plot')
+                     )
                    )
                  )
                )

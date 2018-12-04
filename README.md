@@ -121,6 +121,7 @@ These packages can be installed using `install.packages`
 * ggplot2
 * reshape2
 * scales
+* svglite
 
 These packages need to be installed from GitHub
 
