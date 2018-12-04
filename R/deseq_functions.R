@@ -170,7 +170,7 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
                                    sig_level = 0.05, session_obj ) {
   # expt only
   expt_only_deseq_res <- run_deseq(deseq_datasets[['expt_only_dds']], 
-                                    expt_condition, ctrl_condition)
+                                    expt_condition, ctrl_condition, sig_level)
   # make results table
   unprocessed_results <- expt_only_deseq_res[['result']]
   unprocessed_sig_genes <- 
@@ -193,11 +193,11 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
   
   # plus_baseline
   expt_plus_baseline_deseq_res <- run_deseq(deseq_datasets[['expt_plus_baseline_dds']], 
-                                      expt_condition, ctrl_condition)
+                                      expt_condition, ctrl_condition, sig_level)
   # plus_baseline_with_stage
   expt_plus_baseline_with_stage_deseq_res <- 
     run_deseq(deseq_datasets[['expt_plus_baseline_with_stage_dds']],
-              expt_condition, ctrl_condition)
+              expt_condition, ctrl_condition, sig_level)
   
   # overlap lists
   overlaps <- list()
@@ -301,7 +301,8 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
 #' @examples
 #' run_deseq( deseq_dataset, expt_condition, ctrl_condition )
 #'
-run_deseq <- function(dds, expt_condition, ctrl_condition) {
+run_deseq <- function(dds, expt_condition, ctrl_condition,
+                      sig_level) {
   dds <- tryCatch( DESeq(dds),
                    error = function(err){
                      if( grepl('the model matrix is not full rank', err$message ) ){
@@ -315,7 +316,8 @@ run_deseq <- function(dds, expt_condition, ctrl_condition) {
   )
   
   # Write out results for specified pair of conditions
-  res <- results(dds, contrast=c("condition", expt_condition, ctrl_condition))
+  res <- results(dds, contrast=c("condition", expt_condition, ctrl_condition),
+                 alpha = sig_level)
   return(list(deseq = dds, result = res))
 }
 

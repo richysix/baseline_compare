@@ -7,7 +7,7 @@ source(file.path(rootPath, 'R/deseq_functions.R'))
 session_obj <- list(userData = list(testing = TRUE, debug = FALSE))
 load(file.path(rootPath, 'data/test-brd2-data.rda'))
 expt_only_dds <- create_new_DESeq2DataSet(expt_data, baseline_data = NULL,
-                                          gender_column = 'sex', groups = NULL,
+                                          gender_column = NULL, groups = NULL,
                                           condition_column = 'condition',
                                           session_obj = session_obj)
 test_that("create from expt data only", {
@@ -17,6 +17,13 @@ test_that("create from expt data only", {
   expect_equal(dim(counts(expt_only_dds)), c(1999, 8), info = 'counts')
   expect_equal(design(expt_only_dds), as.formula('~ condition'), info = 'design formula')
 })
+
+# rerun with gender_column specified to match other datasets
+expt_only_dds <- create_new_DESeq2DataSet(expt_data, baseline_data = NULL,
+                                          gender_column = 'sex', groups = NULL,
+                                          condition_column = 'condition',
+                                          session_obj = session_obj)
+
 
 load(file.path(rootPath, 'data/Mm_baseline_data.rda'))
 # subset expt_data and Mm_baseline to common_genes to avoid warning
@@ -113,12 +120,12 @@ test_that("Model matrix not full rank", {
 })
 
 # Test run_deseq
-deseq_res <- run_deseq(expt_only_dds, 'hom', 'wt')
+deseq_res <- run_deseq(expt_only_dds, 'hom', 'wt', 0.05)
 test_that("DESeq results", {
   expect_equal(sum(deseq_res$result$padj < 0.05 & !is.na(deseq_res$result$padj)),
-               537)
+               524)
   expect_equal(head( order(deseq_res$result$padj) ),
-               c(130, 599, 733, 1701, 1384, 1294) )
+               c(130, 1938, 733, 1294, 1384, 599) )
 })
 
 # test overlap
@@ -138,16 +145,16 @@ test_that("DESeq2 overlaps", {
   # check overlaps
   expect_equal(names(overlapped_results[['overlaps']]),
                      c('mutant_response', 'delay', 'no_delay', 'discard'))
-  expect_equal(length(overlapped_results[['overlaps']][['mutant_response']]), 163)
-  expect_equal(length(overlapped_results[['overlaps']][['delay']]), 79)
-  expect_equal(length(overlapped_results[['overlaps']][['no_delay']]), 179)
-  expect_equal(length(overlapped_results[['overlaps']][['discard']]), 243)
+  expect_equal(length(overlapped_results[['overlaps']][['mutant_response']]), 162)
+  expect_equal(length(overlapped_results[['overlaps']][['delay']]), 74)
+  expect_equal(length(overlapped_results[['overlaps']][['no_delay']]), 172)
+  expect_equal(length(overlapped_results[['overlaps']][['discard']]), 235)
   # check results tables
   expect_equal(length(overlapped_results[['results_tables']]), 6)
-  expect_equal(dim(overlapped_results[['results_tables']][['unprocessed']]), c(537, 8))
-  expect_equal(dim(overlapped_results[['results_tables']][['mutant_response']]), c(163, 12))
-  expect_equal(dim(overlapped_results[['results_tables']][['delay']]), c(79, 12))
-  expect_equal(dim(overlapped_results[['results_tables']][['no_delay']]), c(179, 12))
-  expect_equal(dim(overlapped_results[['results_tables']][['discard']]), c(243, 12))
+  expect_equal(dim(overlapped_results[['results_tables']][['unprocessed']]), c(524, 8))
+  expect_equal(dim(overlapped_results[['results_tables']][['mutant_response']]), c(162, 12))
+  expect_equal(dim(overlapped_results[['results_tables']][['delay']]), c(74, 12))
+  expect_equal(dim(overlapped_results[['results_tables']][['no_delay']]), c(172, 12))
+  expect_equal(dim(overlapped_results[['results_tables']][['discard']]), c(235, 12))
   expect_equal(dim(overlapped_results[['results_tables']][['all_genes']]), c(1999, 12))
 })
