@@ -120,7 +120,7 @@ test_that("Model matrix not full rank", {
 })
 
 # Test run_deseq
-deseq_res <- run_deseq(expt_only_dds, 'hom', 'wt', 0.05)
+deseq_res <- run_deseq(expt_only_dds, 'mut', 'sib', 0.05)
 test_that("DESeq results", {
   expect_equal(sum(deseq_res$result$padj < 0.05 & !is.na(deseq_res$result$padj)),
                524)
@@ -134,7 +134,7 @@ deseq_datasets <- list(
   expt_plus_baseline_dds = expt_plus_baseline_dds,
   expt_plus_baseline_with_stage_dds = expt_plus_baseline_with_stage_dds
 )
-overlapped_results <- overlap_deseq_results(deseq_datasets, 'hom', 'wt', 0.05, session_obj)
+overlapped_results <- overlap_deseq_results(deseq_datasets, 'mut', 'sib', 0.05, session_obj)
 
 test_that("DESeq2 overlaps", {
   expect_equal(class(overlapped_results), 'list')

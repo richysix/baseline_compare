@@ -30,6 +30,9 @@ server <- function(input, output, session) {
   session$userData[['testing']] <- TRUE
   # session <- list(userData = list(testing = TRUE, debug = TRUE))
   
+  exptCondition <- reactiveVal(value = 'mut')
+  ctrlCondition <- reactiveVal(value = 'sib')
+  
   # create initial alerts
   createAlert(session, anchorId = 'progress', alertId = 'progress_0',
               content = 'Waiting for data upload...', dismiss = FALSE)
@@ -498,8 +501,8 @@ server <- function(input, output, session) {
                   content = 'Running DESeq2. This may take a while', dismiss = FALSE)
       sig_level <- input$sig_level
       deseq_results_3_ways <- 
-        overlap_deseq_results( deseq_datasets, expt_condition = 'hom', 
-                                ctrl_condition =  'wt', sig_level = sig_level,
+        overlap_deseq_results( deseq_datasets, expt_condition = exptCondition(), 
+                                ctrl_condition =  ctrlCondition(), sig_level = sig_level,
                                 session_obj = session )
       return(deseq_results_3_ways)
     }
