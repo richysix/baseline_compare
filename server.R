@@ -663,6 +663,7 @@ server <- function(input, output, session) {
       results_table <- resultsTable()
       # get gene id by row number
       gene_id <- results_table[ row_number, 'Gene.ID' ]
+      gene_name <- results_table[ row_number, 'Name' ]
       # get counts for gene id
       expt_plus_baseline <- results[['plus_baseline_res']]
       counts <- 
@@ -687,7 +688,12 @@ server <- function(input, output, session) {
           fill_var = 'stage', fill_palette = col_palette, 
           shape_var = 'condition', shape_palette = shape_palette, 
           sample_names = FALSE
-        ) + theme(axis.text.x = element_text(angle = 90))
+        ) +
+        labs(x = 'Sample', y = 'Normalised Counts',
+             fill = 'Stage', shape = 'Condition',
+             title = paste0(gene_name, ' (', gene_id, ')') ) +
+        theme(axis.text.x = element_text(angle = 90),
+              plot.title = element_text(face = 'bold', hjust = 0.5))
       
       return(count_plot)
     }
