@@ -191,8 +191,28 @@ ui <- fluidPage(
              )
     ),
     tabPanel("Count Plot", value = 'count_plot_panel',
-      bsAlert("count_plot_alert"),
-      plotOutput('count_plot_selected_gene')
+             bsAlert("count_plot_alert"),
+             sidebarLayout(
+               position = 'right',
+               sidebarPanel(
+                 width = 3,
+                 h4('Download'),
+                 radioButtons(
+                   "plot_format_counts",
+                   label = 'Plot Format',
+                   choices = list('pdf' = 'pdf', 
+                                  'eps' = 'eps',
+                                  'svg' = 'svg',
+                                  'png' = 'png'),
+                   selected = 'pdf'
+                 ),
+                 downloadButton('download_current_count_plot', 'Download Current Plot')
+               ),
+               mainPanel(
+                 width = 9,
+                 plotOutput('count_plot_selected_gene')
+               )
+             )
     ),
     tabPanel("Help", value = 'help_panel',
              includeMarkdown('README.md')

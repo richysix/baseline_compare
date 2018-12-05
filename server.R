@@ -24,6 +24,9 @@ allowed_conditions <- c('hom', 'het', 'wt', 'mut', 'sib')
 
 # Server logic
 server <- function(input, output, session) {
+################################################################################
+  ## FILE INPUT TAB
+  
   # load baseline data
   # loads object called Mm_baseline
   load(file.path('data', 'Mm_baseline_data.rda'))
@@ -303,6 +306,8 @@ server <- function(input, output, session) {
     }
   })
 
+################################################################################
+  ## PCA TAB
   pcs <- reactive({
     info <- pca_info()
     if (session$userData[['debug']]) {
@@ -385,17 +390,7 @@ server <- function(input, output, session) {
       paste('pca_plot', Sys.Date(), input$plot_format_reduced, sep = '.')
     },
     content = function(file) {
-      if (input$plot_format_reduced == "pdf") {
-        pdf(file, paper = "special", height = 7, width = 10) # open the pdf device
-      } else if (input$plot_format_reduced == "eps") {
-        postscript(file, paper = "special", height = 7, width = 10) # open the postscript device
-      } else if (input$plot_format_reduced == "svg") {
-        svglite(file, height = 7, width = 10) # open the svg device
-      } else if (input$plot_format_reduced == "png") {
-        png(file, height = 480, width = 960, res = 100) # open the png device
-      } else {
-        pdf(file, paper = "special", height = 7, width = 10) # open the pdf device
-      }
+      open_graphics_device(input$plot_format_reduced, file)
       print(pcaPlotReduced())
       dev.off()  # close device
     },
@@ -480,17 +475,7 @@ server <- function(input, output, session) {
       paste('pca_plot_all', Sys.Date(), input$plot_format_all, sep = '.')
     },
     content = function(file) {
-      if (input$plot_format_all == "pdf") {
-        pdf(file, paper = "special", height = 7, width = 10) # open the pdf device
-      } else if (input$plot_format_all == "eps") {
-        postscript(file, paper = "special", height = 7, width = 10) # open the postscript device
-      } else if (input$plot_format_all == "svg") {
-        svglite(file, height = 7, width = 10) # open the svg device
-      } else if (input$plot_format_all == "png") {
-        png(file, height = 480, width = 960, res = 100) # open the png device
-      } else {
-        pdf(file, paper = "special", height = 7, width = 10) # open the pdf device
-      }
+      open_graphics_device(input$plot_format_all, file)
       print(pcaPlotAll())
       dev.off()  # close device
     },
@@ -536,6 +521,8 @@ server <- function(input, output, session) {
     contentType = 'image/pdf'
   )
   
+################################################################################
+  ## RESULTS TAB
   # run DESeq2
   deseq_results <- reactive({
     deseq_datasets <- deseqDatasets()
@@ -659,42 +646,68 @@ server <- function(input, output, session) {
   )
   
   observeEvent(input$results_table_rows_selected,{
-      updateTabsetPanel(session, 'baseline_compare', selected = 'count_plot_panel')
+      updateTabsetPanel(session, 'baseline_compare', 
+                        selected = 'count_plot_panel')
     },
     priority = 1000
   )
   
-  output$count_plot_selected_gene <- renderPlot({
+################################################################################
+  ## COUNT PLOT TAB
+  countPlot <- reactive({
     row_number <- input$results_table_rows_selected
-    results_source <- resultsSource()
-    results <- deseq_results()
     if (!is.null(row_number)) {
       closeAlert(session, 'count_plot_instructions')
-      # get count data for gene
-      results_table <- results[['results_tables']][[results_source]]
+      
+      results <- deseq_results()
+      results_table <- resultsTable()
+      # get gene id by row number
+      gene_id <- results_table[ row_number, 'Gene.ID' ]
+      # get counts for gene id
+      expt_plus_baseline <- results[['plus_baseline_res']]
+      counts <- 
+        counts(expt_plus_baseline[['deseq']], normalized = TRUE)[ gene_id, ]
+      counts_m <- melt(counts, value.name = 'Counts')
+      plot_data <- as.data.frame(merge(counts_m, 
+                                       colData(expt_plus_baseline[['deseq']]), 
+                                       by = 'row.names'))
+      
       if( session$userData[['debug']] ) {
         print(row_number)
         print(head(results_table))
-      }
-      gene_id <- results_table[ row_number, 'Gene.ID' ]
-      expt_plus_baseline <- results[['plus_baseline_res']]
-      counts <- counts(expt_plus_baseline[['deseq']], normalized = TRUE)[ gene_id, ]
-      counts_m <- melt(counts, value.name = 'Counts')
-      plot_data <- as.data.frame(merge(counts_m, colData(expt_plus_baseline[['deseq']]), by = 'row.names'))
-      
-      if( session$userData[['debug']] ) {
         print(counts)
         print(head(plot_data))
       }
       
       col_palette <- colour_palette(plot_data$stage)
       shape_palette <- shape_palette(plot_data$condition)
-      count_plot <- scatterplot_with_fill_and_shape(plot_data, x_var = 'sample_name', y_var = 'Counts', 
-                                                    fill_var = 'stage', fill_palette = col_palette, 
-                                                    shape_var = 'condition', shape_palette = shape_palette, 
-                                                    sample_names = FALSE) + theme(axis.text.x = element_text(angle = 90))
+      count_plot <- 
+        scatterplot_with_fill_and_shape(
+          plot_data, x_var = 'sample_name', y_var = 'Counts', 
+          fill_var = 'stage', fill_palette = col_palette, 
+          shape_var = 'condition', shape_palette = shape_palette, 
+          sample_names = FALSE
+        ) + theme(axis.text.x = element_text(angle = 90))
       
       return(count_plot)
     }
   })
+  
+  output$count_plot_selected_gene <- renderPlot({
+    return(countPlot())
+  })
+  
+  # for downloading the plot as a pdf/png
+  output$download_current_count_plot <- downloadHandler(
+    filename = function() {
+      paste(Sys.Date(), paste(exptCondition(), ctrlCondition(), sep = '_vs_'), 
+            'counts', input$plot_format_counts, sep = '.')
+    },
+    content = function(file) {
+      open_graphics_device(input$plot_format_counts, file)
+      print(countPlot())
+      dev.off()  # close device
+    },
+    contentType = paste0('image/', input$plot_format_counts)
+  )
 }

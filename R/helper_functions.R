@@ -84,4 +84,34 @@ shape_palette <- function(x) {
   }
 }
 
-
+#' Open a graphics device
+#'
+#' \code{open_graphics_device} takes a file extension and opens a graphics device
+#'
+#'    The device name must be one of pdf, eps, svg and png. 
+#'    Anything else causes a pdf device to be opened
+#'    
+#' @param dev_name character - file extension, used to determine device type
+#' @param filename character - file name
+#' 
+#' @return NULL (invisibly)
+#'
+#' @examples
+#' open_graphics_device('pdf', 'plot.pdf')
+#' 
+#' open_graphics_device('svg', 'plot.svg')
+#' 
+open_graphics_device <- function(dev_name, filename){
+  if (dev_name == "pdf") {
+    pdf(file = filename, paper = "special", height = 7, width = 10) # open the pdf device
+  } else if (dev_name == "eps") {
+    postscript(file = filename, paper = "special", height = 7, width = 10) # open the postscript device
+  } else if (dev_name == "svg") {
+    svglite(file = filename, height = 7, width = 10) # open the svg device
+  } else if (dev_name == "png") {
+    png(filename = filename, height = 480, width = 960, res = 100) # open the png device
+  } else {
+    pdf(file = filename, paper = "special", height = 7, width = 10) # open the pdf device
+  }
+  invisible(NULL)
+}
