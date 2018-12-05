@@ -169,13 +169,20 @@ ui <- fluidPage(
                fluidRow(bsAlert("deseq_progress_2")),
                fluidRow(
                  column(width = 3,
-                        actionButton('mutant_response', 'Mutant Response', width = '200px'),
+                        actionButton('mutant_response', 'Mutant Response', 
+                                     width = '200px'),
                         actionButton('delay', 'Delay', width = '200px'),
                         actionButton('no_delay', 'No Delay', width = '200px'),
                         actionButton('discard', 'Discard', width = '200px'),
                         hr(),
-                        actionButton('unprocessed', 'Experiment Samples only', width = '200px'),
-                        actionButton('all_genes', 'All Genes', width = '200px')
+                        actionButton('unprocessed', 'Experiment Samples only', 
+                                     width = '200px'),
+                        actionButton('all_genes', 'All Genes', width = '200px'),
+                        h4('Download'),
+                        downloadButton('download_results_all',
+                                       'Download Results (All Genes)'),
+                        downloadButton('download_results_rda',
+                                       'Download Results Objects (.rda)')
                  ),
                  column( width = 9,
                    DT::dataTableOutput(outputId="results_table")

@@ -580,22 +580,31 @@ server <- function(input, output, session) {
   observeEvent(input$unprocessed, { resultsSource('unprocessed') })
   observeEvent(input$all_genes, { resultsSource('all_genes') })
   
-  output$results_table <- DT::renderDataTable({
+  resultsTable <- reactive({
     results_source <- resultsSource()
     results <- deseq_results()
     if (!is.null(results) & !is.null(results_source)) {
       if (session$userData[['debug']]) {
         cat("Function: results_table\n")
-        print(results_source)
-        print(class(results))
-        print(length(results))
+        cat( sprintf('Results: Source = %s, Class = %s, Length = %s\n', 
+                    results_source, class(results), length(results)) )
         print(names(results))
-        print(class(results[['results_tables']]))
-        print(length(results[['results_tables']]))
+        cat( sprintf('Results Tables: Class = %s, Length = %s\n', 
+               class(results[['results_tables']]), 
+               length(results[['results_tables']])) )
         print(names(results[['results_tables']]))
       }
       
-      results_table <- results[['results_tables']][[results_source]]
+      return( results[['results_tables']][[results_source]] )
+    } else {
+      return(NULL)
+    }
+  })
+  
+  output$results_table <- DT::renderDataTable({
+    results_table = resultsTable()
+    results_source <- resultsSource()
+    if(!is.null(results_table)) {
       # create datatable, accounting for the different columns
       # in unprocessed vs others
       if (results_source == 'unprocessed') {
@@ -621,6 +630,33 @@ server <- function(input, output, session) {
       return(results_dt)
     }
   }, server = TRUE)
+  
+  # for downloading a file of the transformed counts
+  output$download_results_all <- downloadHandler(
+    filename = function() {
+      paste(Sys.Date(), paste(exptCondition(), ctrlCondition(), sep = '_vs_'), 
+            'all.tsv', sep = '.')
+    },
+    content = function(file) {
+      write.table(
+        resultsTable(), file = file, quote = FALSE,
+        col.names = TRUE, row.names = FALSE, sep = "\t"
+      )
+    },
+    contentType = 'text/tsv'
+  )
+  
+  output$download_results_rda <- downloadHandler(
+    filename = function() {
+      paste('deseq_results', 
+            paste(exptCondition(), ctrlCondition(), sep = '_vs_'),
+            Sys.Date(), 'rda', sep = '.')
+    },
+    content = function(file) {
+      deseq_results <- deseq_results()
+      save(deseq_results, file = file)
+    }
+  )
   
   observeEvent(input$results_table_rows_selected,{
       updateTabsetPanel(session, 'baseline_compare', selected = 'count_plot_panel')
