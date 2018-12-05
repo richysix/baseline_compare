@@ -124,13 +124,20 @@ server <- function(input, output, session) {
     }
   })
   
-  obsConditionLevels <- observe({
+  # is the selected condition column valid?
+  validConditionColumn <- reactive({
     condition_var <- input$condition_var
-    expt_data <- isolate(exptData())
-    # check levels
-    if(valid_condition_column( colData(expt_data)[[condition_var]] )) {
+    expt_data <- exptData()
+    return( valid_condition_column( colData(expt_data)[[condition_var]] ) )
+  })
+  
+  # create alert if an invalid column is selected
+  obsConditionLevels <- observe({
+    if( validConditionColumn() ) {
       closeAlert(session, 'invalid_condition_col')
     } else {
+      condition_var <- isolate(input$condition_var)
+      expt_data <- isolate(exptData())
       closeAlert(session, 'invalid_condition_col')
       createAlert(
         session, anchorId = 'input_file_alert', dismiss = TRUE,
@@ -150,63 +157,79 @@ server <- function(input, output, session) {
   deseqDatasets <- reactive({
     button_value <- input$analyse_data
     if (button_value > 0) {
-      expt_data <- isolate(exptData())
-      if (is.null(expt_data)) {
+      # create alert and stop analysis if an invalid column is selected
+      if(!isolate(validConditionColumn())) {
+        # close any open alert
+        closeAlert(session, 'invalid_condition_col')
+        createAlert(
+          session, anchorId = 'input_file_alert', dismiss = FALSE,
+          alertId = 'invalid_condition_col', title = 'Invalid Condition Column', 
+          content = paste('The selected condition column contains', 
+                          'entries that not allowed.', 'Valid values are: ',
+                          paste0(allowed_conditions, collapse = ', '), '<br>',
+                          "DESeq2 analysis can't be started."),
+          style = 'danger'
+        )
         return(NULL)
       } else {
-        use_gender <- isolate(input$use_gender)
-        condition_column <- isolate(input$condition_var)
-        if ( use_gender ) {
-          gender_column <- isolate(input$sex_var)
-          groups <- c('sex')
+        expt_data <- isolate(exptData())
+        if (is.null(expt_data)) {
+          return(NULL)
         } else {
-          gender_column = NULL
-          groups <- NULL
-        }
-        # experiment data only
-        expt_only_dds <- 
-          create_new_DESeq2DataSet(expt_data, baseline_data = NULL, gender_column = gender_column,
-                                   groups = groups, condition_column = condition_column, 
-                                   session_obj = session )
-        
-        # experiment data plus stage matched baseline samples
-        expt_plus_baseline_dds <-
-          withCallingHandlers(
-            create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
+          use_gender <- isolate(input$use_gender)
+          condition_column <- isolate(input$condition_var)
+          if ( use_gender ) {
+            gender_column <- isolate(input$sex_var)
+            groups <- c('sex')
+          } else {
+            gender_column = NULL
+            groups <- NULL
+          }
+          # experiment data only
+          expt_only_dds <- 
+            create_new_DESeq2DataSet(expt_data, baseline_data = NULL, gender_column = gender_column,
                                      groups = groups, condition_column = condition_column, 
-                                     match_stages = TRUE, session_obj = session ),
-            error = function(e){ stop(e) },
-            warning = function(w){
-              print(conditionMessage(w))
-              createAlert(session, anchorId = 'input_file_alert', 
-                          title = 'Input Files', content = conditionMessage(w), style = 'warning')
-              invokeRestart("muffleWarning")
-            })
-        
-        # experiment data plus all baseline samples
-        expt_plus_all_baseline_dds <-
-          suppressWarnings(
-            create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
-                                     groups = groups, condition_column = condition_column, 
-                                     match_stages = FALSE, session_obj = session ))
-
-        # experiment data plus stage matched baseline samples
-        # design formula includes stage
-        groups <- c(groups, 'stage')
-        expt_plus_baseline_with_stage_dds <-
-          suppressWarnings(
-            create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
-                                     groups = groups, condition_column = condition_column, 
-                                     match_stages = TRUE, session_obj = session ))
-        
-        return(
-          list(
-            expt_only_dds = expt_only_dds,
-            expt_plus_baseline_dds = expt_plus_baseline_dds,
-            expt_plus_all_baseline_dds = expt_plus_all_baseline_dds,
-            expt_plus_baseline_with_stage_dds = expt_plus_baseline_with_stage_dds
+                                     session_obj = session )
+          
+          # experiment data plus stage matched baseline samples
+          expt_plus_baseline_dds <-
+            withCallingHandlers(
+              create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
+                                       groups = groups, condition_column = condition_column, 
+                                       match_stages = TRUE, session_obj = session ),
+              error = function(e){ stop(e) },
+              warning = function(w){
+                print(conditionMessage(w))
+                createAlert(session, anchorId = 'input_file_alert', 
+                            title = 'Input Files', content = conditionMessage(w), style = 'warning')
+                invokeRestart("muffleWarning")
+              })
+          
+          # experiment data plus all baseline samples
+          expt_plus_all_baseline_dds <-
+            suppressWarnings(
+              create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
+                                       groups = groups, condition_column = condition_column, 
+                                       match_stages = FALSE, session_obj = session ))
+  
+          # experiment data plus stage matched baseline samples
+          # design formula includes stage
+          groups <- c(groups, 'stage')
+          expt_plus_baseline_with_stage_dds <-
+            suppressWarnings(
+              create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
+                                       groups = groups, condition_column = condition_column, 
+                                       match_stages = TRUE, session_obj = session ))
+          
+          return(
+            list(
+              expt_only_dds = expt_only_dds,
+              expt_plus_baseline_dds = expt_plus_baseline_dds,
+              expt_plus_all_baseline_dds = expt_plus_all_baseline_dds,
+              expt_plus_baseline_with_stage_dds = expt_plus_baseline_with_stage_dds
+            )
           )
-        )
+        }
       }
     }
   })
