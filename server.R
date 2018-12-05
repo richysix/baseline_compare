@@ -19,6 +19,9 @@ source(file.path('R', 'helper_functions.R'))
 # set option to make datatables render NA values as a string
 options(htmlwidgets.TOJSON_ARGS = list(na = 'string'))
 
+# set some constants
+allowed_conditions <- c('hom', 'het', 'wt', 'mut', 'sib')
+
 # Server logic
 server <- function(input, output, session) {
   # load baseline data
@@ -118,6 +121,28 @@ server <- function(input, output, session) {
                            choices = condition_options,
                            selected = condition_options[[1]]
         )
+    }
+  })
+  
+  obsConditionLevels <- observe({
+    condition_var <- input$condition_var
+    expt_data <- isolate(exptData())
+    # check levels
+    if(valid_condition_column( colData(expt_data)[[condition_var]] )) {
+      closeAlert(session, 'invalid_condition_col')
+    } else {
+      closeAlert(session, 'invalid_condition_col')
+      createAlert(
+        session, anchorId = 'input_file_alert', dismiss = TRUE,
+        alertId = 'invalid_condition_col', title = 'Invalid Condition Column', 
+        content = paste('The selected condition column contains', 
+                        'entries that not allowed.', 'Valid values are: ',
+                        paste0(allowed_conditions, collapse = ', '), '<br>',
+                        'Selected column looks like this: ',
+                        paste0(colData(expt_data)[[condition_var]], 
+                               collapse = ', ')),
+        style = 'danger'
+      )
     }
   })
   

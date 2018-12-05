@@ -13,7 +13,7 @@ test_that("load_sample_data", {
   expect_equal(dim(sample_info), c(8, 4))
   expect_equal(levels(sample_info$condition), c("hom", "wt"))
   expect_equal(levels(sample_info$sex), c("F", "M"))
-  expect_equal(levels(sample_info$stage), paste(c("15", "20", "13", "19", "26", "22", "28"), "somites"))
+  expect_equal(levels(sample_info$stage), paste0(c("15", "20", "13", "19", "26", "22", "28"), "somites"))
 })
 
 count_data <- load_count_data(count_file, session)
@@ -35,3 +35,15 @@ test_that("merge_with_baseline", {
                  "The following genes are present in the [A-Za-z]+ data, but not in the [A-Za-z]+ data:")
 })
 
+# test check condition var
+test_that("check condition var", {
+  expect_false(valid_condition_column(1:10))
+  expect_false(valid_condition_column(runif(15)))
+  expect_false(valid_condition_column(rep(TRUE, 3)))
+  expect_false(valid_condition_column(sample_info$stage))
+  expect_true(valid_condition_column(sample_info$condition))
+  expect_true(valid_condition_column(sample_info$condition,
+                                     allowed_values = c('hom', 'wt')) )
+  expect_false(valid_condition_column(sample_info$condition,
+                                     allowed_values = c('wt')) )
+})

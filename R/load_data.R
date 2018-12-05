@@ -89,6 +89,27 @@ load_sample_data <- function(sample_file, session){
   return(sample_info)
 }
 
+#' Check condition column
+#'
+#' \code{valid_condition_column} takes a vector and checks it is a valid condition column
+#'
+#'    The values are checked against the list of allowed values.
+#'    
+#' @param condition_column   factor/character - vector to check
+#' 
+#' @return logical TRUE/FALSE for whether vector passes
+#'
+#' @examples
+#' valid_condition_column( sample_info$condition )
+#'
+#' @export
+#'
+valid_condition_column <- 
+  function(condition_column, 
+           allowed_values = c('hom', 'het', 'wt', 'mut', 'sib') ){
+  return(all(condition_column %in% allowed_values))
+}
+
 #' load_count_data
 #'
 #' \code{load_count_data} Reads in the sample data and retuns it
