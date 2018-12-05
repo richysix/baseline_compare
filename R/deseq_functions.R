@@ -65,13 +65,13 @@ create_new_DESeq2DataSet <- function( expt_data, baseline_data = NULL,
     # create warning for any missing genes
     msg <- NULL
     if ( length(expt_only_genes) > 0 ) {
-      msg <- paste0('The following genes are present in the experimental data, but not in the Baseline data: ',
-                    paste0(expt_only_genes, collapse = ', '))
+      msg <- paste0('There are ', length(expt_only_genes), 
+                    ' genes in the experimental data, that are not in the Baseline data')
       warning(msg)
     }
     if ( length(baseline_only) > 0 ) {
-      msg <- paste0('The following genes are present in the Baseline data, but not in the experimental data: ',
-                    paste0(baseline_only, collapse = ', '))
+      msg <- paste0('There are ', length(baseline_only), 
+                    ' genes in the Baseline data, that are not in the experimental data')
       warning(msg)
     }
     

@@ -46,7 +46,7 @@ test_that("create from expt_data plus baseline", {
                                           gender_column = 'sex', groups = c('sex'),
                                           condition_column = 'condition', 
                                           session_obj = session_obj),
-                 "The following genes are present in the [A-Za-z]+ data, but not in the [A-Za-z]+ data:")
+                 "There are [0-9]+ genes in the [A-Za-z]+ data, that are not in the [A-Za-z]+ data")
 })
 
 expt_plus_baseline_with_stage_dds <- 
@@ -63,7 +63,7 @@ test_that("create from expt_data plus baseline with stage", {
   expect_warning(create_new_DESeq2DataSet(expt_subset, baseline_data = Mm_baseline,
                                           gender_column = 'sex', groups = c('sex', 'stage'),
                                           condition_column = 'condition', session_obj = session_obj),
-                 "The following genes are present in the [A-Za-z]+ data, but not in the [A-Za-z]+ data:")
+                 "There are [0-9]+ genes in the [A-Za-z]+ data, that are not in the [A-Za-z]+ data")
 })
 
 expt_plus_all_baseline_dds <- 

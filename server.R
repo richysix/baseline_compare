@@ -154,7 +154,7 @@ server <- function(input, output, session) {
             warning = function(w){
               print(conditionMessage(w))
               createAlert(session, anchorId = 'input_file_alert', 
-                          content = conditionMessage(w), style = 'warning')
+                          title = 'Input Files', content = conditionMessage(w), style = 'warning')
               invokeRestart("muffleWarning")
             })
         
