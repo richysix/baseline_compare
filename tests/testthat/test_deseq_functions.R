@@ -134,9 +134,17 @@ deseq_datasets <- list(
   expt_plus_baseline_dds = expt_plus_baseline_dds,
   expt_plus_baseline_with_stage_dds = expt_plus_baseline_with_stage_dds
 )
-overlapped_results <- overlap_deseq_results(deseq_datasets, 'mut', 'sib', 0.05, session_obj)
-
+messages <- character()
+overlapped_results <- withCallingHandlers(
+  overlap_deseq_results(deseq_datasets, 'mut', 'sib', 0.05, session_obj),
+  message = function(m) {
+    messages <<- c(messages, m$message)
+  }
+)
 test_that("DESeq2 overlaps", {
+  expect_true(any(grepl('Experimental Data only', messages)))
+  expect_true(any(grepl('^Experimental Data Plus Baseline\n$', messages)))
+  expect_true(any(grepl('Experimental Data Plus Baseline with Stage', messages)))
   expect_equal(class(overlapped_results), 'list')
   expect_equal(length(overlapped_results), 5)
   expect_equal(names(overlapped_results), 

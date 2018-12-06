@@ -536,6 +536,14 @@ server <- function(input, output, session) {
                   content = 'Running DESeq2. This may take a while', dismiss = FALSE)
       sig_level <- input$sig_level
       shinyjs::removeCssClass(id = 'deseq_output', class = "hidden")
+      # Create a Progress object
+      progress <- shiny::Progress$new(session)
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      
+      progress$set(message = "Running DESeq2...", value = 0.05)
+      session$userData[['progress_object']] <- progress
+      
       deseq_results_3_ways <- 
         withCallingHandlers(
           overlap_deseq_results( deseq_datasets, expt_condition = exptCondition(), 
@@ -553,6 +561,7 @@ server <- function(input, output, session) {
             shinyjs::html("deseq_console_ouput", html = message_text, add = TRUE)
           }
         )
+      progress$set(value = 1)
       return(deseq_results_3_ways)
     }
   })
