@@ -566,7 +566,10 @@ server <- function(input, output, session) {
   observeEvent(input$discard, { resultsSource('discard') })
   observeEvent(input$unprocessed, { resultsSource('unprocessed') })
   observeEvent(input$all_genes, { resultsSource('all_genes') })
-  
+  observeEvent(resultsSource(), {
+    session$sendCustomMessage("selected_results_button", resultsSource())
+  })
+    
   resultsTable <- reactive({
     results_source <- resultsSource()
     results <- deseq_results()

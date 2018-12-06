@@ -1,27 +1,32 @@
 var debug = true
 var testing = true
 
-function addResultsLinks(msg) {
-    var links = document.getElementsByClassName("results_button");
-    if (debug) {
-        console.log(links);
-    }
-    
+function hightlightSelected_Button(buttonId) {
+    var buttons = document.getElementsByClassName("results-button");
     var i;
-    for (i = 0; i < links.length; i++) { 
-        links[i].onclick = function() {
-            if (debug) {
-                console.log(this);
+    for (i = 0; i < buttons.length; i++) {
+        if (debug) {
+            console.log(buttons[i])
+        }
+        id = buttons[i].id
+        classNames = buttons[i].className.split(" ");
+        if (classNames.indexOf('selected-results') == -1) {
+            if (buttonId == id) {
+                buttons[i].className += " " + 'selected-results';
             }
-            // send message to shiny
-            var message = { results_source:this.id, rand: Math.random() }
-            Shiny.onInputChange("js_results_source", message);
-            return false;
+        } else {
+            if (buttonId != id) {
+                buttons[i].className = buttons[i].className.replace(/\bselected-results\b/g, "");
+            }
+        }
+        if (debug) {
+            console.log(buttons[i])
         }
     }
 }
 
 $(document).ready( function() {
-    addResultsLinks('initialise')
     
+    Shiny.addCustomMessageHandler("selected_results_button",
+                                  hightlightSelected_Button)
 });

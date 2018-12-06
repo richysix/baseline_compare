@@ -2,3 +2,11 @@
     float: right;
     color: #212121;
 }
+
+.btn {
+    margin: 1px;
+}
+
+.selected-results {
+    border-color: #ff0000;
+}
