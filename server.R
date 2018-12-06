@@ -131,28 +131,33 @@ server <- function(input, output, session) {
   validConditionColumn <- reactive({
     condition_var <- input$condition_var
     expt_data <- exptData()
-    return( valid_condition_column( colData(expt_data)[[condition_var]] ) )
+    if (!is.null(expt_data)) {
+      return( valid_condition_column( colData(expt_data)[[condition_var]] ) )
+    }
   })
   
   # create alert if an invalid column is selected
   obsConditionLevels <- observe({
-    if( validConditionColumn() ) {
-      closeAlert(session, 'invalid_condition_col')
-    } else {
-      condition_var <- isolate(input$condition_var)
-      expt_data <- isolate(exptData())
-      closeAlert(session, 'invalid_condition_col')
-      createAlert(
-        session, anchorId = 'input_file_alert', dismiss = TRUE,
-        alertId = 'invalid_condition_col', title = 'Invalid Condition Column', 
-        content = paste('The selected condition column contains', 
-                        'entries that not allowed.', 'Valid values are: ',
-                        paste0(allowed_conditions, collapse = ', '), '<br>',
-                        'Selected column looks like this: ',
-                        paste0(colData(expt_data)[[condition_var]], 
-                               collapse = ', ')),
-        style = 'danger'
-      )
+    valid_condition_column <- validConditionColumn()
+    if (!is.null(valid_condition_column)) {
+      if( valid_condition_column ) {
+        closeAlert(session, 'invalid_condition_col')
+      } else {
+        condition_var <- isolate(input$condition_var)
+        expt_data <- isolate(exptData())
+        closeAlert(session, 'invalid_condition_col')
+        createAlert(
+          session, anchorId = 'input_file_alert', dismiss = TRUE,
+          alertId = 'invalid_condition_col', title = 'Invalid Condition Column', 
+          content = paste('The selected condition column contains', 
+                          'entries that not allowed.', 'Valid values are: ',
+                          paste0(allowed_conditions, collapse = ', '), '<br>',
+                          'Selected column looks like this: ',
+                          paste0(colData(expt_data)[[condition_var]], 
+                                 collapse = ', ')),
+          style = 'danger'
+        )
+      }
     }
   })
   
