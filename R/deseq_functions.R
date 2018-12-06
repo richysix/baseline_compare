@@ -175,6 +175,7 @@ create_new_DESeq2DataSet <- function( expt_data, baseline_data = NULL,
 overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_condition, 
                                    sig_level = 0.05, session_obj ) {
   # expt only
+  message('Experimental Data only')
   expt_only_deseq_res <- run_deseq(deseq_datasets[['expt_only_dds']], 
                                     expt_condition, ctrl_condition, sig_level)
   # make results table
@@ -198,9 +199,11 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
   unprocessed_merged_table[['Chr']] <- as.character(unprocessed_merged_table[['Chr']])
   
   # plus_baseline
+  message('Experimental Data Plus Baseline')
   expt_plus_baseline_deseq_res <- run_deseq(deseq_datasets[['expt_plus_baseline_dds']], 
                                       expt_condition, ctrl_condition, sig_level)
   # plus_baseline_with_stage
+  message('Experimental Data Plus Baseline with Stage')
   expt_plus_baseline_with_stage_deseq_res <- 
     run_deseq(deseq_datasets[['expt_plus_baseline_with_stage_dds']],
               expt_condition, ctrl_condition, sig_level)

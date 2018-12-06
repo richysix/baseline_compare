@@ -535,10 +535,24 @@ server <- function(input, output, session) {
                   title = 'DESeq2 Analysis',
                   content = 'Running DESeq2. This may take a while', dismiss = FALSE)
       sig_level <- input$sig_level
+      shinyjs::removeCssClass(id = 'deseq_output', class = "hidden")
       deseq_results_3_ways <- 
-        overlap_deseq_results( deseq_datasets, expt_condition = exptCondition(), 
+        withCallingHandlers(
+          overlap_deseq_results( deseq_datasets, expt_condition = exptCondition(), 
                                 ctrl_condition =  ctrlCondition(), sig_level = sig_level,
-                                session_obj = session )
+                                session_obj = session ),
+          message = function(m) {
+            message_text <- m$message
+            if (!grepl("Experimental Data", message_text) ){ 
+              message_text <- paste0("  ", message_text)
+            }
+            if (grepl("replacing outliers", message_text)) {
+              message_text <- gsub("\n", "\n  ", message_text)
+              message_text <- gsub("  $", "", message_text)
+            }
+            shinyjs::html("deseq_console_ouput", html = message_text, add = TRUE)
+          }
+        )
       return(deseq_results_3_ways)
     }
   })
@@ -611,24 +625,6 @@ server <- function(input, output, session) {
       )
     )
   ))
-  
-  # table_header_expt <- htmltools::withTags(table(
-  #   class = 'display',
-  #   thead(
-  #     tr(
-  #       th('Gene.ID'),
-  #       th('Name'),
-  #       th(colspan = 2, 'Experiment Data Only'),
-  #       th(rowspan = 2, 'Chr'),
-  #       th(rowspan = 2, 'Start'),
-  #       th(rowspan = 2, 'End'),
-  #       th(rowspan = 2, 'Strand')
-  #     ),
-  #     tr(
-  #       lapply(rep(c('log2FC', 'padj'), 3), th)
-  #     )
-  #   )
-  # ))
   
   output$results_table <- DT::renderDataTable({
     results_table = resultsTable()

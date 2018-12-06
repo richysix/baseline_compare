@@ -66,6 +66,10 @@ ui <- fluidPage(
                       tags$div(class = "well",
                         bsAlert("progress"),
                         bsAlert("deseq_progress_1"),
+                        div(id = "deseq_output", class = "hidden",
+                            h6('DESeq2 output'),
+                            pre(id = "deseq_console_ouput")
+                        ),
                         tags$div(id = 'deseq_results_text',
                           textOutput('results_text')
                         )
