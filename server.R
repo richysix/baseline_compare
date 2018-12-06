@@ -591,14 +591,70 @@ server <- function(input, output, session) {
     }
   })
   
+  # custom header for datatables
+  table_header_3ways <- htmltools::withTags(table(
+    class = 'display',
+    thead(
+      tr(
+        th(rowspan = 2, 'Gene.ID'),
+        th(rowspan = 2, 'Name'),
+        th(colspan = 2, 'Experiment Data Only'),
+        th(colspan = 2, 'Plus Baseline'),
+        th(colspan = 2, 'Plus Baseline with Stage'),
+        th(rowspan = 2, 'Chr'),
+        th(rowspan = 2, 'Start'),
+        th(rowspan = 2, 'End'),
+        th(rowspan = 2, 'Strand')
+      ),
+      tr(
+        lapply(rep(c('log2FC', 'padj'), 3), th)
+      )
+    )
+  ))
+  
+  # table_header_expt <- htmltools::withTags(table(
+  #   class = 'display',
+  #   thead(
+  #     tr(
+  #       th('Gene.ID'),
+  #       th('Name'),
+  #       th(colspan = 2, 'Experiment Data Only'),
+  #       th(rowspan = 2, 'Chr'),
+  #       th(rowspan = 2, 'Start'),
+  #       th(rowspan = 2, 'End'),
+  #       th(rowspan = 2, 'Strand')
+  #     ),
+  #     tr(
+  #       lapply(rep(c('log2FC', 'padj'), 3), th)
+  #     )
+  #   )
+  # ))
+  
   output$results_table <- DT::renderDataTable({
     results_table = resultsTable()
     results_source <- resultsSource()
     if(!is.null(results_table)) {
+      # round log2fc and padj columns
+      col_names <- names(results_table)
+      results_table <- 
+        as.data.frame(
+          lapply(names(results_table),
+              function(col_name){
+                if (grepl("log2FC", col_name)) {
+                  return(sprintf('%.3f', results_table[[col_name]]))
+                } else if (grepl("padj", col_name)) {
+                  return(sprintf('%.3g', results_table[[col_name]]))
+                } else {
+                  return(results_table[[col_name]])
+                }
+              }
+            )
+        )
+      names(results_table) <- col_names
       # create datatable, accounting for the different columns
       # in unprocessed vs others
       if (results_source == 'unprocessed') {
-        results_dt <- datatable(results_table,
+        results_dt <- datatable(results_table, 
                                 selection = 'single', rownames = FALSE,
                                 options = list(pageLength = 100)) %>%
           formatStyle(c("padj"), 
@@ -608,7 +664,7 @@ server <- function(input, output, session) {
                       backgroundColor = styleInterval(0.05, c('white', '#C0C0C0')) )
         
       } else {
-        results_dt <- datatable(results_table,
+        results_dt <- datatable(results_table, container = table_header_3ways,
                                 selection = 'single', rownames = FALSE,
                                 options = list(pageLength = 100)) %>%
           formatStyle(c("padj.expt_only", "padj.plus_baseline", "padj.with_stage"), 
