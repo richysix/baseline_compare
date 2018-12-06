@@ -263,11 +263,11 @@ server <- function(input, output, session) {
       on.exit(progress$close())
       
       progress$set(message = "Calculating PCA...",
-                   detail = 'This will depend on the number of samples', value = 0.2)
+                   detail = 'This will depend on the number of samples', value = 0.25)
       
       dds_vst <- varianceStabilizingTransformation(deseq_datasets[['expt_plus_baseline_dds']], blind=TRUE)
       
-      progress$set(value = 0.5)
+      progress$set(value = 0.4)
       
       if (session$userData[['debug']]) {
         cat('Variance Stabilizing Transform done.\n')

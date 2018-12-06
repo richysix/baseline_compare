@@ -180,7 +180,7 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
   expt_only_deseq_res <- run_deseq(deseq_datasets[['expt_only_dds']], 
                                     expt_condition, ctrl_condition, sig_level)
   if (!is.null(progress_obj)) {
-    progress_obj$set(value = 0.35)
+    progress_obj$set(value = 0.15)
   }
   # make results table
   unprocessed_results <- expt_only_deseq_res[['result']]
@@ -207,7 +207,7 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
   expt_plus_baseline_deseq_res <- run_deseq(deseq_datasets[['expt_plus_baseline_dds']], 
                                       expt_condition, ctrl_condition, sig_level)
   if (!is.null(progress_obj)) {
-    progress_obj$set(value = 0.65)
+    progress_obj$set(value = 0.4)
   }
   # plus_baseline_with_stage
   message('Experimental Data Plus Baseline with Stage')
