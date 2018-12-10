@@ -10,3 +10,7 @@
 .selected-results {
     border-color: #ff0000;
 }
+
+.notSig {
+    background-color: #C0C0C0;
+}
