@@ -1,7 +1,7 @@
 var debug = true
 var testing = true
 
-function hightlightSelected_Button(buttonId) {
+function hightlightSelectedButton(buttonId) {
     var buttons = document.getElementsByClassName("results-button");
     var i;
     for (i = 0; i < buttons.length; i++) {
@@ -28,5 +28,5 @@ function hightlightSelected_Button(buttonId) {
 $(document).ready( function() {
     
     Shiny.addCustomMessageHandler("selected_results_button",
-                                  hightlightSelected_Button)
+                                  hightlightSelectedButton)
 });
