@@ -663,19 +663,19 @@ server <- function(input, output, session) {
       names(results_table) <- col_names
       # create datatable, accounting for the different columns
       # in unprocessed vs others
+      data_table_options <- list(
+        pageLength = 100,
+        rowCallback = JS("function( row, data, dataIndex ) {",
+                        "for (x in data){",
+                        "if (data[x] == 'NA'){",
+                        "$('td:eq(' + x + ')', row).addClass( 'notSig' );",
+                        "}}}" )
+      )
       if (results_source == 'unprocessed') {
         results_dt <- 
           datatable(results_table, 
             selection = 'single', rownames = FALSE,
-            options = list(pageLength = 100,
-                           rowCallback = JS(
-                             "function( row, data, dataIndex ) {",
-                             "for (x in data){",
-                             "if (data[x] == 'NA'){",
-                             "$('td:eq(' + x + ')', row).addClass( 'notSig' );",
-                             "}}",
-                             "}"
-                           ))) %>%
+            options = data_table_options ) %>%
           formatStyle(c("padj"), 
                       backgroundColor = styleInterval(0.05, c('white', '#C0C0C0')) ) %>%
           formatStyle(c("log2FC"),
@@ -686,15 +686,7 @@ server <- function(input, output, session) {
         results_dt <- 
           datatable(results_table, container = table_header_3ways,
             selection = 'single', rownames = FALSE,
-            options = list(pageLength = 5,
-                           rowCallback = JS(
-                             "function( row, data, dataIndex ) {",
-                             "for (x in data){",
-                             "if (data[x] == 'NA'){",
-                             "$('td:eq(' + x + ')', row).addClass( 'notSig' );",
-                             "}}",
-                             "}"
-                           ))) %>%
+            options = data_table_options ) %>%
           formatStyle(c("padj.expt_only", "padj.plus_baseline", "padj.with_stage"), 
                       backgroundColor = styleInterval(0.05, c('white', '#C0C0C0')) ) %>%
           formatStyle(c("log2FC.expt_only", "log2FC.plus_baseline", "log2FC.with_stage"),
