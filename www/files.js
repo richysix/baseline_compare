@@ -12,4 +12,6 @@ $(document).ready( function() {
     
     $('.panel-collapse').on('hidden.bs.collapse', toggleIcon);
     $('.panel-collapse').on('shown.bs.collapse', toggleIcon);
+    
+    $(".file-format-content").load('file_formats.html')
 });

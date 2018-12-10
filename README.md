@@ -20,13 +20,15 @@ RNA-seq. Our baseline data was produced from Illumina RNA-seq, mapped with
 
 ### File Upload
 
-See [File Formats]('#file_formats') section.
+Upload a samples file and a counts file.
+
+<div class="file-format-content" ></div>
 
 ### Principal Component Analysis (PCA)
 
 When the "Analyse Data" button is clicked, the App does PCA on the data to
 tell if the experimental samples are compatible with the baseline data. The
-experimental samples should not cluster on the own in the PCA. It is possible
+experimental samples should not cluster on their own in the PCA. It is possible
 that mutant samples will cluster away from the baseline, but the sibling
 embryos should be close to similarly staged baseline embryos as in the example
 below. Two plots are produced, one containing baseline samples that match the
@@ -44,7 +46,12 @@ probably not appropriate._**
 
 ![PCA plot of demo data with all Baseline samples](www/images/demo_pca_all.png "PCA of demo data with all baseline samples")
 
-The PCA plots can de downloaded in various formats.
+Use the "PCA Options" sidepanel to select which Principal Components are plotted
+against each other and whether to plot sample names. The plots can de downloaded
+in various formats. "Download Current Plot" saves only the current plot of
+two principal components plotted against each other. "Download all PCs" produces
+a pdf file of each component plotted against the next. The current plot can also
+be downloaded as a .rda file for loading into R and customising later.
 
 ### DESeq2 Analysis
 
@@ -55,24 +62,28 @@ results set.
 
 |Analysis Set|Samples|DESEq2 model|
 |------------|-------|------------|
-|Experiment Only|Experimental Data only| + (sex) + condition|
-|Experiment + Baseline|Experimental Data and stage-matched Baseline samples| + (sex) + condition|
-|Experiment + Baseline with Stage|Experimental Data and stage-matched Baseline samples| + (sex) + stage + condition|
+|Experiment Only|Experimental Data only| counts ~ (sex +) condition|
+|Experiment + Baseline|Experimental Data and stage-matched Baseline samples| counts ~ (sex +) condition|
+|Experiment + Baseline with Stage|Experimental Data and stage-matched Baseline samples| counts ~ (sex +) stage + condition|
 
 #### Results
 
-To produce the results sets, the lists of significantly differentially expressed
-genes from the three different analyses are overlapped as in the diagram below.
+The lists of significantly differentially expressed genes from the three
+different analyses are overlapped and the results sets are produced as in the
+diagram below.
 
 ![DESeq2 results sets](www/images/deseq2_overlaps.png "Diagram of DESeq2 overlaps")
 
+The results sets can be selected by clicking on the button on the left of the
+"Results" tab.
 The Mutant Response set should be enriched for genes whose differential
 expression is due to the condition and not due to stage differences between
 mutant and sibling samples. The Experimental Only significant results are
-available as well for comparison as is a table of all the genes in the
+available as well for comparison, as is a table of all the genes in the
 analysis with log2 fold changes and adjusted pvalues for each DESeq2 run.
 
-All results tables can be downloaded.
+The full results table can be downloaded and a text file of saved as a .rda
+file for loading into R.
 
 #### Count Plot
 
