@@ -42,12 +42,16 @@ A file of counts for Ensembl genes for each sample
 named <strong>Gene.ID</strong> is required. The remaining columns should be the counts
 for the individual samples. The column names should be of the form
 <em>sample_id</em> count</p>
-<p>Once the data is loaded, the <strong>Options</strong> panel with change based on
-the column names.</p>
+<h4>Options</h4>
+<h5>Threshold for statistical significance</h5>
+<p>This is for setting the threshold for statistical significance of the adjusted
+p values.</p>
+<p>The other two options panels will change once the data is loaded, based on
+the column names of the samples file.</p>
 <h5>Condition:</h5>
 <p>Select the column name from you samples file that
 describes the condition of each embryo. Currently, accepted entries in the
-condition column are 'wt', 'het', 'hom', 'sib' and 'mut'. The DESeq analysis
+condition column are 'wt', 'het', 'hom', 'sib' and 'mut'. The DESeq2 analysis
 combines wt and het entries into a sib category.</p>
 <h5>Sex:</h5>
 <p>If your samples file contains information on the sex of the embryos this
@@ -56,3 +60,5 @@ differences in sex. Use the checkbox to include sex in the analysis or not.
 If the checkbox is ticked, please choose the correct column name from the
 radio buttons.</p>
 <p>Once the options are set correctly, click "<strong>Analyse Data</strong>"</p>
+<p>Remember, both the PCA and DESeq2 analysis will be rerun every time the
+"<strong>Analyse Data</strong>" button is clicked</p>
