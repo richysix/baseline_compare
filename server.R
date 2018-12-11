@@ -554,7 +554,7 @@ server <- function(input, output, session) {
         createAlert(session, anchorId = 'deseq_progress_2', alertId = 'progress_5',
                     title = 'DESeq2 Analysis',
                     content = 'Running DESeq2. This may take a while', dismiss = FALSE)
-        sig_level <- input$sig_level
+        sig_level <- isolate(input$sig_level)
         shinyjs::removeCssClass(id = 'deseq_output', class = "hidden")
         # Create a Progress object
         progress <- shiny::Progress$new(session)
