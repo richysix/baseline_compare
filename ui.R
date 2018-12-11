@@ -22,12 +22,13 @@ ui <- fluidPage(
                  checkboxInput("demo_data", 
                                label = 'Use Demo data',
                                value = FALSE),
-                 numericInput(inputId = 'sig_level', label = 'Threshold for statistical significance', 
-                              value = 0.05, min = 0, max = 1, step = 0.01, width = NULL),
-                 actionButton('analyse_data', 'Analyse Data', icon = NULL, width = NULL),
+                 actionButton('analyse_data', 'Analyse Data'),
+                 p('This button will rerun the analysis every time it is clicked'),
                  hr(),
                  # options
                  h4('Options'),
+                 numericInput(inputId = 'sig_level', label = 'Threshold for statistical significance', 
+                              value = 0.05, min = 0, max = 1, step = 0.01, width = NULL),
                  radioButtons(
                    "condition_var",
                    label = h5("Condition"),
