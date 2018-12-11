@@ -56,7 +56,7 @@ be downloaded as a .rda file for loading into R and customising later.
 ### DESeq2 Analysis
 
 Once the PCA is finished, the DESeq2 analysis is started. For full details of
-the method, please see [Collins et al.](). Briefly, DESeq2 is run three
+the method, please see Collins et al. Briefly, DESeq2 is run three
 different ways (shown below) and the significant gene lists are overlapped to produce the
 results set.
 
