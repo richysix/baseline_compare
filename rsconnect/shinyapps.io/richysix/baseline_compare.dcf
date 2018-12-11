@@ -1,0 +1,10 @@
+name: baseline_compare
+title:
+username:
+account: richysix
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 611860
+bundleId: 1753072
+url: https://richysix.shinyapps.io/baseline_compare/
+when: 1544459679.60952
