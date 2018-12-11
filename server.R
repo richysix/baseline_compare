@@ -34,6 +34,7 @@ server <- function(input, output, session) {
   # set testing and debugging options
   session$userData[['debug']] <- TRUE
   session$userData[['testing']] <- TRUE
+  session$userData[['precomputed']] <- TRUE
   # session <- list(userData = list(testing = TRUE, debug = TRUE))
   
   exptCondition <- reactiveVal(value = 'mut')
@@ -165,78 +166,83 @@ server <- function(input, output, session) {
   deseqDatasets <- reactive({
     button_value <- input$analyse_data
     if (button_value > 0) {
-      # create alert and stop analysis if an invalid column is selected
-      if(!isolate(validConditionColumn())) {
-        # close any open alert
-        closeAlert(session, 'invalid_condition_col')
-        createAlert(
-          session, anchorId = 'input_file_alert', dismiss = FALSE,
-          alertId = 'invalid_condition_col', title = 'Invalid Condition Column', 
-          content = paste('The selected condition column contains', 
-                          'entries that not allowed.', 'Valid values are: ',
-                          paste0(allowed_conditions, collapse = ', '), '<br>',
-                          "DESeq2 analysis can't be started."),
-          style = 'danger'
-        )
-        return(NULL)
+      if (session$userData[['precomputed']]) {
+        load('data/test_deseq_datasets.rda')
+        return(deseq_datasets)
       } else {
-        expt_data <- isolate(exptData())
-        if (is.null(expt_data)) {
+        # create alert and stop analysis if an invalid column is selected
+        if(!isolate(validConditionColumn())) {
+          # close any open alert
+          closeAlert(session, 'invalid_condition_col')
+          createAlert(
+            session, anchorId = 'input_file_alert', dismiss = FALSE,
+            alertId = 'invalid_condition_col', title = 'Invalid Condition Column', 
+            content = paste('The selected condition column contains', 
+                            'entries that not allowed.', 'Valid values are: ',
+                            paste0(allowed_conditions, collapse = ', '), '<br>',
+                            "DESeq2 analysis can't be started."),
+            style = 'danger'
+          )
           return(NULL)
         } else {
-          use_gender <- isolate(input$use_gender)
-          condition_column <- isolate(input$condition_var)
-          if ( use_gender ) {
-            gender_column <- isolate(input$sex_var)
-            groups <- c('sex')
+          expt_data <- isolate(exptData())
+          if (is.null(expt_data)) {
+            return(NULL)
           } else {
-            gender_column = NULL
-            groups <- NULL
-          }
-          # experiment data only
-          expt_only_dds <- 
-            create_new_DESeq2DataSet(expt_data, baseline_data = NULL, gender_column = gender_column,
-                                     groups = groups, condition_column = condition_column, 
-                                     session_obj = session )
-          
-          # experiment data plus stage matched baseline samples
-          expt_plus_baseline_dds <-
-            withCallingHandlers(
-              create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
+            use_gender <- isolate(input$use_gender)
+            condition_column <- isolate(input$condition_var)
+            if ( use_gender ) {
+              gender_column <- isolate(input$sex_var)
+              groups <- c('sex')
+            } else {
+              gender_column = NULL
+              groups <- NULL
+            }
+            # experiment data only
+            expt_only_dds <- 
+              create_new_DESeq2DataSet(expt_data, baseline_data = NULL, gender_column = gender_column,
                                        groups = groups, condition_column = condition_column, 
-                                       match_stages = TRUE, session_obj = session ),
-              error = function(e){ stop(e) },
-              warning = function(w){
-                print(conditionMessage(w))
-                createAlert(session, anchorId = 'input_file_alert', 
-                            title = 'Input Files', content = conditionMessage(w), style = 'warning')
-                invokeRestart("muffleWarning")
-              })
-          
-          # experiment data plus all baseline samples
-          expt_plus_all_baseline_dds <-
-            suppressWarnings(
-              create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
-                                       groups = groups, condition_column = condition_column, 
-                                       match_stages = FALSE, session_obj = session ))
-  
-          # experiment data plus stage matched baseline samples
-          # design formula includes stage
-          groups <- c(groups, 'stage')
-          expt_plus_baseline_with_stage_dds <-
-            suppressWarnings(
-              create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
-                                       groups = groups, condition_column = condition_column, 
-                                       match_stages = TRUE, session_obj = session ))
-          
-          return(
-            list(
-              expt_only_dds = expt_only_dds,
-              expt_plus_baseline_dds = expt_plus_baseline_dds,
-              expt_plus_all_baseline_dds = expt_plus_all_baseline_dds,
-              expt_plus_baseline_with_stage_dds = expt_plus_baseline_with_stage_dds
+                                       session_obj = session )
+            
+            # experiment data plus stage matched baseline samples
+            expt_plus_baseline_dds <-
+              withCallingHandlers(
+                create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
+                                         groups = groups, condition_column = condition_column, 
+                                         match_stages = TRUE, session_obj = session ),
+                error = function(e){ stop(e) },
+                warning = function(w){
+                  print(conditionMessage(w))
+                  createAlert(session, anchorId = 'input_file_alert', 
+                              title = 'Input Files', content = conditionMessage(w), style = 'warning')
+                  invokeRestart("muffleWarning")
+                })
+            
+            # experiment data plus all baseline samples
+            expt_plus_all_baseline_dds <-
+              suppressWarnings(
+                create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
+                                         groups = groups, condition_column = condition_column, 
+                                         match_stages = FALSE, session_obj = session ))
+    
+            # experiment data plus stage matched baseline samples
+            # design formula includes stage
+            groups <- c(groups, 'stage')
+            expt_plus_baseline_with_stage_dds <-
+              suppressWarnings(
+                create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
+                                         groups = groups, condition_column = condition_column, 
+                                         match_stages = TRUE, session_obj = session ))
+            
+            return(
+              list(
+                expt_only_dds = expt_only_dds,
+                expt_plus_baseline_dds = expt_plus_baseline_dds,
+                expt_plus_all_baseline_dds = expt_plus_all_baseline_dds,
+                expt_plus_baseline_with_stage_dds = expt_plus_baseline_with_stage_dds
+              )
             )
-          )
+          }
         }
       }
     }
@@ -248,66 +254,71 @@ server <- function(input, output, session) {
     if (is.null(deseq_datasets)) {
       return(NULL)
     } else {
-      if (session$userData[['debug']]) {
-        cat('Function: pca_info\n')
-        cat('Variance Stabilizing Transform begin...\n')
+      if (session$userData[['precomputed']]) {
+        load('data/test_pca_info.rda')
+        return(info)
+      } else {
+        if (session$userData[['debug']]) {
+          cat('Function: pca_info\n')
+          cat('Variance Stabilizing Transform begin...\n')
+        }
+        # update progress alert
+        closeAlert(session, 'progress_1')
+        createAlert(session, anchorId = 'progress', alertId = 'progress_2',
+                    content = 'Calculating PCA...', dismiss = FALSE)
+        
+        # Create a Progress object
+        progress <- shiny::Progress$new(session)
+        # Make sure it closes when we exit this reactive, even if there's an error
+        on.exit(progress$close())
+        
+        progress$set(message = "Calculating PCA...",
+                     detail = 'This will depend on the number of samples', value = 0.25)
+        
+        dds_vst <- varianceStabilizingTransformation(deseq_datasets[['expt_plus_baseline_dds']], blind=TRUE)
+        
+        progress$set(value = 0.4)
+        
+        if (session$userData[['debug']]) {
+          cat('Variance Stabilizing Transform done.\n')
+        }
+        
+        info <- list()
+        pca <- prcomp( t( assay(dds_vst) ) )
+        info[['subset']][['pca']] <- pca
+        info[['subset']][['propVarPC']] <- pca$sdev^2 / sum( pca$sdev^2 )
+        aload <- abs(pca$rotation)
+        info[['subset']][['propVarRegion']] <- sweep(aload, 2, colSums(aload), "/")
+        info[['subset']][['dds_vst']] <- dds_vst
+        
+        if (session$userData[['debug']]) {
+          cat('Function: pca_info, all samples\n')
+          cat('Variance Stabilizing Transform begin...\n')
+        }
+        
+        expt_plus_all_baseline_dds_vst <- 
+          varianceStabilizingTransformation(deseq_datasets[['expt_plus_all_baseline_dds']], blind=TRUE)
+        
+        if (session$userData[['debug']]) {
+          cat('Variance Stabilizing Transform done.\n')
+        }
+        
+        pca <- prcomp( t( assay(expt_plus_all_baseline_dds_vst) ) )
+        info[['all']][['pca']] <- pca
+        info[['all']][['propVarPC']] <- pca$sdev^2 / sum( pca$sdev^2 )
+        aload <- abs(pca$rotation)
+        info[['all']][['propVarRegion']] <- sweep(aload, 2, colSums(aload), "/")
+        info[['all']][['dds_vst']] <- expt_plus_all_baseline_dds_vst
+        
+        progress$set(value = 1)
+        
+        # update progress alert
+        closeAlert(session, 'progress_2')
+        createAlert(session, anchorId = 'progress', alertId = 'progress_3',
+                    content = 'PCA Finished', dismiss = FALSE)
+        
+        return(info)
       }
-      # update progress alert
-      closeAlert(session, 'progress_1')
-      createAlert(session, anchorId = 'progress', alertId = 'progress_2',
-                  content = 'Calculating PCA...', dismiss = FALSE)
-      
-      # Create a Progress object
-      progress <- shiny::Progress$new(session)
-      # Make sure it closes when we exit this reactive, even if there's an error
-      on.exit(progress$close())
-      
-      progress$set(message = "Calculating PCA...",
-                   detail = 'This will depend on the number of samples', value = 0.25)
-      
-      dds_vst <- varianceStabilizingTransformation(deseq_datasets[['expt_plus_baseline_dds']], blind=TRUE)
-      
-      progress$set(value = 0.4)
-      
-      if (session$userData[['debug']]) {
-        cat('Variance Stabilizing Transform done.\n')
-      }
-      
-      info <- list()
-      pca <- prcomp( t( assay(dds_vst) ) )
-      info[['subset']][['pca']] <- pca
-      info[['subset']][['propVarPC']] <- pca$sdev^2 / sum( pca$sdev^2 )
-      aload <- abs(pca$rotation)
-      info[['subset']][['propVarRegion']] <- sweep(aload, 2, colSums(aload), "/")
-      info[['subset']][['dds_vst']] <- dds_vst
-      
-      if (session$userData[['debug']]) {
-        cat('Function: pca_info, all samples\n')
-        cat('Variance Stabilizing Transform begin...\n')
-      }
-      
-      expt_plus_all_baseline_dds_vst <- 
-        varianceStabilizingTransformation(deseq_datasets[['expt_plus_all_baseline_dds']], blind=TRUE)
-      
-      if (session$userData[['debug']]) {
-        cat('Variance Stabilizing Transform done.\n')
-      }
-      
-      pca <- prcomp( t( assay(expt_plus_all_baseline_dds_vst) ) )
-      info[['all']][['pca']] <- pca
-      info[['all']][['propVarPC']] <- pca$sdev^2 / sum( pca$sdev^2 )
-      aload <- abs(pca$rotation)
-      info[['all']][['propVarRegion']] <- sweep(aload, 2, colSums(aload), "/")
-      info[['all']][['dds_vst']] <- expt_plus_all_baseline_dds_vst
-      
-      progress$set(value = 1)
-      
-      # update progress alert
-      closeAlert(session, 'progress_2')
-      createAlert(session, anchorId = 'progress', alertId = 'progress_3',
-                  content = 'PCA Finished', dismiss = FALSE)
-      
-      return(info)
     }
   })
 
@@ -532,42 +543,47 @@ server <- function(input, output, session) {
   deseq_results <- reactive({
     deseq_datasets <- deseqDatasets()
     if (!is.null(deseq_datasets)) {
-      # update progress alert
-      createAlert(session, anchorId = 'deseq_progress_1', alertId = 'progress_4',
-                  content = 'Running DESeq2...', dismiss = FALSE)
-      closeAlert(session, 'deseq_not_started')
-      createAlert(session, anchorId = 'deseq_progress_2', alertId = 'progress_5',
-                  title = 'DESeq2 Analysis',
-                  content = 'Running DESeq2. This may take a while', dismiss = FALSE)
-      sig_level <- input$sig_level
-      shinyjs::removeCssClass(id = 'deseq_output', class = "hidden")
-      # Create a Progress object
-      progress <- shiny::Progress$new(session)
-      # Make sure it closes when we exit this reactive, even if there's an error
-      on.exit(progress$close())
-      
-      progress$set(message = "Running DESeq2...", value = 0.05)
-      session$userData[['progress_object']] <- progress
-      
-      deseq_results_3_ways <- 
-        withCallingHandlers(
-          overlap_deseq_results( deseq_datasets, expt_condition = exptCondition(), 
-                                ctrl_condition =  ctrlCondition(), sig_level = sig_level,
-                                session_obj = session ),
-          message = function(m) {
-            message_text <- m$message
-            if (!grepl("Experimental Data", message_text) ){ 
-              message_text <- paste0("  ", message_text)
+      if (session$userData[['precomputed']]) {
+        load('data/test_deseq_results_object.rda')
+        return(deseq_results_3_ways)
+      } else {
+        # update progress alert
+        createAlert(session, anchorId = 'deseq_progress_1', alertId = 'progress_4',
+                    content = 'Running DESeq2...', dismiss = FALSE)
+        closeAlert(session, 'deseq_not_started')
+        createAlert(session, anchorId = 'deseq_progress_2', alertId = 'progress_5',
+                    title = 'DESeq2 Analysis',
+                    content = 'Running DESeq2. This may take a while', dismiss = FALSE)
+        sig_level <- input$sig_level
+        shinyjs::removeCssClass(id = 'deseq_output', class = "hidden")
+        # Create a Progress object
+        progress <- shiny::Progress$new(session)
+        # Make sure it closes when we exit this reactive, even if there's an error
+        on.exit(progress$close())
+        
+        progress$set(message = "Running DESeq2...", value = 0.05)
+        session$userData[['progress_object']] <- progress
+        
+        deseq_results_3_ways <- 
+          withCallingHandlers(
+            overlap_deseq_results( deseq_datasets, expt_condition = exptCondition(), 
+                                  ctrl_condition =  ctrlCondition(), sig_level = sig_level,
+                                  session_obj = session ),
+            message = function(m) {
+              message_text <- m$message
+              if (!grepl("Experimental Data", message_text) ){ 
+                message_text <- paste0("  ", message_text)
+              }
+              if (grepl("replacing outliers", message_text)) {
+                message_text <- gsub("\n", "\n  ", message_text)
+                message_text <- gsub("  $", "", message_text)
+              }
+              shinyjs::html("deseq_console_ouput", html = message_text, add = TRUE)
             }
-            if (grepl("replacing outliers", message_text)) {
-              message_text <- gsub("\n", "\n  ", message_text)
-              message_text <- gsub("  $", "", message_text)
-            }
-            shinyjs::html("deseq_console_ouput", html = message_text, add = TRUE)
-          }
-        )
-      progress$set(value = 1)
-      return(deseq_results_3_ways)
+          )
+        progress$set(value = 1)
+        return(deseq_results_3_ways)
+      }
     }
   })
   
