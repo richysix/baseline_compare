@@ -264,6 +264,7 @@ server <- function(input, output, session) {
         }
         # update progress alert
         closeAlert(session, 'progress_1')
+        closeAlert(session, 'progress_3')
         createAlert(session, anchorId = 'progress', alertId = 'progress_2',
                     content = 'Calculating PCA...', dismiss = FALSE)
         
@@ -548,6 +549,8 @@ server <- function(input, output, session) {
         return(deseq_results_3_ways)
       } else {
         # update progress alert
+        closeAlert(session, 'progress_6')
+        closeAlert(session, 'progress_7')
         createAlert(session, anchorId = 'deseq_progress_1', alertId = 'progress_4',
                     content = 'Running DESeq2...', dismiss = FALSE)
         closeAlert(session, 'deseq_not_started')
@@ -556,6 +559,9 @@ server <- function(input, output, session) {
                     content = 'Running DESeq2. This may take a while', dismiss = FALSE)
         sig_level <- isolate(input$sig_level)
         shinyjs::removeCssClass(id = 'deseq_output', class = "hidden")
+        # empty console output
+        shinyjs::html("deseq_console_ouput", html = '')
+        
         # Create a Progress object
         progress <- shiny::Progress$new(session)
         # Make sure it closes when we exit this reactive, even if there's an error
