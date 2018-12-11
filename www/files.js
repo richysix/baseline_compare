@@ -7,6 +7,10 @@ function toggleIcon(e) {
     elem.toggleClass('glyphicon-plus glyphicon-minus');
 }
 
+function addtableClass() {
+    $("table:not(.table)").addClass('table');
+}
+
 $(document).ready( function() {
     //$("#includedContent").load("/www/test.html");
     
@@ -14,4 +18,6 @@ $(document).ready( function() {
     $('.panel-collapse').on('shown.bs.collapse', toggleIcon);
     
     $(".file-format-content").load('file_formats.html')
+    
+    addtableClass()
 });
