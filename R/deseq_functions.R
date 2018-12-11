@@ -39,15 +39,13 @@ create_new_DESeq2DataSet <- function( expt_data, baseline_data = NULL,
       groups <- c('sex')
     }
   }
-  if (!is.null(condition_column)) {
-    names(colData(expt_data))[ names(colData(expt_data)) == condition_column ] <- 'condition'
-    # if conditions are hom, het, wt change to mut, sib
-    conditions <- as.character(colData(expt_data)[['condition']])
-    conditions[ conditions == 'wt' ] <- 'sib'
-    conditions[ conditions == 'het' ] <- 'sib'
-    conditions[ conditions == 'hom' ] <- 'mut'
-    colData(expt_data)[['condition']] <- factor(conditions, levels = c('sib', 'mut'))
-  }
+  names(colData(expt_data))[ names(colData(expt_data)) == condition_column ] <- 'condition'
+  # if conditions are hom, het, wt change to mut, sib
+  conditions <- as.character(colData(expt_data)[['condition']])
+  conditions[ conditions == 'wt' ] <- 'sib'
+  conditions[ conditions == 'het' ] <- 'sib'
+  conditions[ conditions == 'hom' ] <- 'mut'
+  colData(expt_data)[['condition']] <- factor(conditions, levels = c('sib', 'mut'))
   
   # create design formula
   if (!is.null(groups)) {
