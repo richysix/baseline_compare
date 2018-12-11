@@ -25,6 +25,16 @@ function hightlightSelectedButton(buttonId) {
     }
 }
 
+//function to change the colour of table cells base on their content
+//used when producing the results DataTable
+function colourCells( row, data, dataIndex ) {
+    for (x in data){
+        if (data[x] == 'NA'){
+            $('td:eq(' + x + ')', row).addClass( 'notSig' );
+        }
+    }
+}
+
 $(document).ready( function() {
     
     Shiny.addCustomMessageHandler("selected_results_button",

@@ -666,10 +666,7 @@ server <- function(input, output, session) {
       data_table_options <- list(
         pageLength = 100,
         rowCallback = JS("function( row, data, dataIndex ) {",
-                        "for (x in data){",
-                        "if (data[x] == 'NA'){",
-                        "$('td:eq(' + x + ')', row).addClass( 'notSig' );",
-                        "}}}" )
+                          "colourCells( row, data, dataIndex )}") #colourCells is defined in results_table.js
       )
       if (results_source == 'unprocessed') {
         results_dt <- 
