@@ -34,7 +34,7 @@ server <- function(input, output, session) {
   # set testing and debugging options
   session$userData[['debug']] <- TRUE
   session$userData[['testing']] <- TRUE
-  session$userData[['precomputed']] <- TRUE
+  session$userData[['precomputed']] <- FALSE
   # session <- list(userData = list(testing = TRUE, debug = TRUE))
   
   exptCondition <- reactiveVal(value = 'mut')
@@ -632,6 +632,20 @@ server <- function(input, output, session) {
       return( results[['results_tables']][[results_source]] )
     } else {
       return(NULL)
+    }
+  })
+  
+  # number of significant genes
+  output$num_sig_genes <- renderText({
+    results_source <- resultsSource()
+    results_table <- resultsTable()
+    if (!is.null(results_table)) {
+      if (results_source == 'all_genes') {
+        return(NULL)
+      } else {
+        text <- paste0(nrow(results_table), ' significant genes')
+        return(text)
+      }
     }
   })
   

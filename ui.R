@@ -193,7 +193,8 @@ ui <- fluidPage(
                                        'Download Results Objects (.rda)')
                  ),
                  column( width = 9,
-                   DT::dataTableOutput(outputId="results_table")
+                  textOutput('num_sig_genes'),  
+                  DT::dataTableOutput(outputId="results_table")
                  )
                )
              )
