@@ -180,25 +180,6 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
   if (!is.null(progress_obj)) {
     progress_obj$set(value = 0.15)
   }
-  # make results table
-  unprocessed_results <- expt_only_deseq_res[['result']]
-  unprocessed_sig_genes <- 
-    rownames(unprocessed_results)[ 
-      unprocessed_results[['padj']] < sig_level &
-        !is.na(unprocessed_results[['padj']]) ]
-  unprocessed_merged_table <- base::merge(unprocessed_results,
-                        rowData(deseq_datasets[['expt_plus_baseline_dds']]),
-                        by.x = 'row.names', by.y = 'Gene.ID')
-  rownames(unprocessed_merged_table) <- unprocessed_merged_table[["Row.names"]]
-  # subset to sig genes and specific columns
-  unprocessed_merged_table <- 
-    unprocessed_merged_table[ unprocessed_sig_genes, 
-                              c("Row.names", "Name", "log2FoldChange", "padj", 
-                                  "Chr", "Start", "End", "Strand" ) ]
-  colnames(unprocessed_merged_table) <- 
-    c("Gene.ID", "Name", "log2FC", "padj", "Chr", "Start", "End", "Strand" )
-  unprocessed_merged_table[['Name']] <- as.character(unprocessed_merged_table[['Name']])
-  unprocessed_merged_table[['Chr']] <- as.character(unprocessed_merged_table[['Chr']])
   
   # plus_baseline
   message('Experimental Data Plus Baseline')
@@ -257,17 +238,35 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
                            rowData(deseq_datasets[['expt_plus_baseline_dds']]),
                            by.x = 'Row.names', by.y = 'Gene.ID')
   rownames(merged_data_tmp) <- merged_data_tmp[["Row.names"]]
+  # add results set
+  merged_data_tmp[['results_set']] <- 
+    factor(rep('Not Significant', nrow(merged_data_tmp)),
+           levels = c('Mutant Response', 'Delay', 'No Delay', 'Discard',
+                      'Not Significant') )
+  merged_data_tmp[ overlaps[['mutant_response']], 'results_set'] <- 'Mutant Response'
+  merged_data_tmp[ overlaps[['delay']], 'results_set'] <- 'Delay'
+  merged_data_tmp[ overlaps[['no_delay']], 'results_set'] <- 'No Delay'
+  merged_data_tmp[ overlaps[['discard']], 'results_set'] <- 'Discard'
+
   merged_data <- merged_data_tmp[ ,c('Row.names', 'Name', "log2FoldChange.x", "padj.x", 
                                      "log2FoldChange.y", "padj.y",
                                      "log2FoldChange", "padj",
-                                     "Chr", "Start", "End", "Strand" ) ]
+                                     "results_set", "Chr", "Start", "End", "Strand" ) ]
   colnames(merged_data) <- c("Gene.ID", "Name", "log2FC.expt_only", "padj.expt_only", 
                              "log2FC.plus_baseline", "padj.plus_baseline",
                              "log2FC.with_stage", "padj.with_stage",
-                             "Chr", "Start", "End", "Strand" )
+                             "Results Set", "Chr", "Start", "End", "Strand" )
+  # convert factors to character
   merged_data[['Name']] <- as.character(merged_data[['Name']])
   merged_data[['Chr']] <- as.character(merged_data[['Chr']])
+  merged_data[['Results Set']] <- as.character(merged_data[['Results Set']])
+  
   merged_data <- as.data.frame(merged_data)
+  unprocessed_merged_table <- 
+    merged_data[ merged_data[['padj.expt_only']] < sig_level &
+                   !is.na(merged_data[['padj.expt_only']]), 
+                 c("Gene.ID", "Name", "log2FC.expt_only", "padj.expt_only", 
+                   "Results.Set","Chr", "Start", "End", "Strand" ) ]
   
   # make results tables list
   results_tables <- list(
@@ -282,9 +281,7 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
   if (session_obj$userData[['debug']]) {
     cat('Function: overlap_deseq_results\n')
     cat('Unprocessed:\n')
-    print(dim(unprocessed_results))
-    print(length(unprocessed_sig_genes))
-    print(head(unprocessed_sig_genes))
+    print(dim(unprocessed_merged_table))
     cat('All:\n')
     print(dim(merged_data))
     print(sapply(results_tables, dim))

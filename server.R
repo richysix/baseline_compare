@@ -659,6 +659,7 @@ server <- function(input, output, session) {
         th(colspan = 2, 'Experiment Data Only'),
         th(colspan = 2, 'Plus Baseline'),
         th(colspan = 2, 'Plus Baseline with Stage'),
+        th(rowspan = 2, 'Results Set'),
         th(rowspan = 2, 'Chr'),
         th(rowspan = 2, 'Start'),
         th(rowspan = 2, 'End'),
@@ -701,12 +702,14 @@ server <- function(input, output, session) {
       if (results_source == 'unprocessed') {
         results_dt <- 
           datatable(results_table, 
+            colnames = c("Gene.ID", "Name", "log2FC", "padj", "Results Set", 
+                         "Chr", "Start", "End", "Strand" ),
             selection = 'single', rownames = FALSE,
             options = data_table_options ) %>%
-          formatStyle(c("padj"), 
+          formatStyle(c("padj.expt_only"), 
                       backgroundColor = styleInterval(0.05, c('white', '#C0C0C0')) ) %>%
-          formatStyle(c("log2FC"),
-                      valueColumns = c("padj"),
+          formatStyle(c("log2FC.expt_only"),
+                      valueColumns = c("padj.expt_only"),
                       backgroundColor = styleInterval(0.05, c('white', '#C0C0C0')) )
         
       } else {
@@ -724,15 +727,17 @@ server <- function(input, output, session) {
     }
   }, server = TRUE)
   
-  # for downloading a file of the transformed counts
+  # for downloading a file of the results for all genes
   output$download_results_all <- downloadHandler(
     filename = function() {
       paste(Sys.Date(), paste(exptCondition(), ctrlCondition(), sep = '_vs_'), 
             'all.tsv', sep = '.')
     },
     content = function(file) {
+      deseq_results <- deseq_results()
+      results_table <- deseq_results[['results_tables']][['all_genes']]
       write.table(
-        resultsTable(), file = file, quote = FALSE,
+        results_table, file = file, quote = FALSE,
         col.names = TRUE, row.names = FALSE, sep = "\t"
       )
     },
