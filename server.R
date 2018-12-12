@@ -797,9 +797,9 @@ server <- function(input, output, session) {
           lapply(names(results_table),
               function(col_name){
                 if (grepl("log2FC", col_name)) {
-                  return(sprintf('%.3f', results_table[[col_name]]))
+                  return(as.numeric(sprintf('%.3f', results_table[[col_name]])))
                 } else if (grepl("padj", col_name)) {
-                  return(sprintf('%.3g', results_table[[col_name]]))
+                  return(as.numeric(sprintf('%.3g', results_table[[col_name]])))
                 } else {
                   return(results_table[[col_name]])
                 }
@@ -811,6 +811,7 @@ server <- function(input, output, session) {
       # in unprocessed vs others
       data_table_options <- list(
         pageLength = 100,
+        order = list(list(3, 'asc')),
         rowCallback = JS("function( row, data, dataIndex ) {",
                           "colourCells( row, data, dataIndex )}") #colourCells is defined in results_table.js
       )
