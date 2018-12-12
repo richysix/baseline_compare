@@ -30,6 +30,12 @@ ui <- fluidPage(
                  numericInput(inputId = 'sig_level', label = 'Threshold for statistical significance', 
                               value = 0.05, min = 0, max = 1, step = 0.01, width = NULL),
                  radioButtons(
+                   "ensembl_version", label = h5("Ensembl Version"),
+                   choices = list(
+                     "GRCm38_e88" = "GRCm38_e88"
+                   ), selected = "GRCm38_e88"
+                 ),
+                 radioButtons(
                    "condition_var",
                    label = h5("Condition"),
                    choices = list(

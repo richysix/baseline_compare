@@ -33,15 +33,54 @@ server <- function(input, output, session) {
   session$userData[['precomputed']] <- FALSE
   # session <- list(userData = list(testing = TRUE, debug = TRUE))
   
-  # load baseline data
-  # loads object called Mm_baseline
-  if (session$userData[['testing']]) {
-    load(file.path('data', 'test-baseline.rda'))
-    Mm_baseline <- Mm_baseline_test
-  } else {
-    load(file.path('data', 'Mm_baseline_data.rda'))
+  # find available baseline versions
+  get_baseline_files <- function(dir) {
+    baseline_files <- grep("Mm_GRCm[0-9]+_e[0-9]+_baseline_data.rda", 
+                           list.files(dir), value = TRUE)
+    ensembl_names <- gsub("Mm_", "", baseline_files)
+    ensembl_names <- gsub("_baseline_data.rda", "", ensembl_names)
+    names(baseline_files) <- ensembl_names
+    return(baseline_files)
   }
+  baselineFiles <- reactive({
+    get_baseline_files('data')
+  })
   
+  # Change UI options based on input data
+  # ensembl versions
+  observe({
+    if (session$userData[['debug']]) {
+      cat("Function: UI observer - Ensembl version\n")
+    }
+    if (!is.null(baselineFiles())) {
+      # ensembl version options
+      ensembl_versions_options <- as.list(names(baselineFiles()))
+      names(ensembl_versions_options) <- names(baselineFiles())
+      if ( any(ensembl_versions_options == 'GRCm38_88') ) {
+        selected_option <- 'GRCm38_88'
+      } else {
+        selected_option <- ensembl_versions_options[[1]]
+      }
+      updateRadioButtons(session, "ensembl_version",
+                         choices = ensembl_versions_options,
+                         selected = selected_option
+      )
+    }
+  })
+  
+  # load baseline data
+  Mm_baseline <- reactive({
+    version_name <- input$ensembl_version
+    baseline_files <- baselineFiles()
+    if (session$userData[['debug']]) {
+      print('Function: Mm_baseline')
+      print(version_name)
+      print(baseline_files)
+    }
+    load(file.path('data', baseline_files[version_name]))
+    return(eval(as.name(paste0('Mm_', version_name, '_baseline'))))
+  })
+
   exptCondition <- reactiveVal(value = 'mut')
   ctrlCondition <- reactiveVal(value = 'sib')
   
@@ -210,6 +249,7 @@ server <- function(input, output, session) {
                                        session_obj = session )
             
             # experiment data plus stage matched baseline samples
+            Mm_baseline <- isolate(Mm_baseline())
             expt_plus_baseline_dds <-
               withCallingHandlers(
                 create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
@@ -291,7 +331,7 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       expt_data <- isolate(exptData())
-      baseline_only <- setdiff(rownames(Mm_baseline), rownames(expt_data))
+      baseline_only <- setdiff(rownames(Mm_baseline()), rownames(expt_data))
       
       write.table(
         baseline_only, file = file, quote = FALSE,
@@ -307,7 +347,7 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       expt_data <- isolate(exptData())
-      expt_only_genes <- setdiff(rownames(expt_data), rownames(Mm_baseline))
+      expt_only_genes <- setdiff(rownames(expt_data), rownames(Mm_baseline()))
       
       write.table(
         expt_only_genes, file = file, quote = FALSE,
