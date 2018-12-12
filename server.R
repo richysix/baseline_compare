@@ -27,15 +27,20 @@ server <- function(input, output, session) {
 ################################################################################
   ## FILE INPUT TAB
   
-  # load baseline data
-  # loads object called Mm_baseline
-  load(file.path('data', 'Mm_baseline_data.rda'))
-  
   # set testing and debugging options
   session$userData[['debug']] <- TRUE
   session$userData[['testing']] <- TRUE
   session$userData[['precomputed']] <- FALSE
   # session <- list(userData = list(testing = TRUE, debug = TRUE))
+  
+  # load baseline data
+  # loads object called Mm_baseline
+  if (session$userData[['testing']]) {
+    load(file.path('data', 'test-baseline.rda'))
+    Mm_baseline <- Mm_baseline_test
+  } else {
+    load(file.path('data', 'Mm_baseline_data.rda'))
+  }
   
   exptCondition <- reactiveVal(value = 'mut')
   ctrlCondition <- reactiveVal(value = 'sib')
@@ -213,8 +218,40 @@ server <- function(input, output, session) {
                 error = function(e){ stop(e) },
                 warning = function(w){
                   print(conditionMessage(w))
-                  createAlert(session, anchorId = 'input_file_alert', 
-                              title = 'Input Files', content = conditionMessage(w), style = 'warning')
+                  msg_content <- conditionMessage(w)
+                  warning_components <- unlist( strsplit(msg_content, ": ") )
+                  alert_title <- warning_components[1]
+                  add_button <- FALSE
+                  if (alert_title == 'Missing genes in Baseline data') {
+                    alert_anchor <- 'input_file_alert_baseline'
+                    add_button <- TRUE
+                    alert_div <- '#input_file_alert_baseline > .alert'
+                    button_name <- 'missing_genes_list_baseline'
+                    msg_content <- paste0(warning_components[2],
+                                          '. <br>Click the button below to download ',
+                                          'a list of the missing gene ids.<br>')
+                  } else if (alert_title == 'Missing genes in experimental data') {
+                    alert_anchor <- 'input_file_alert_expt'
+                    add_button <- TRUE
+                    alert_div <- '#input_file_alert_expt > .alert'
+                    button_name <- 'missing_genes_list_expt'
+                    msg_content <- paste0(warning_components[2],
+                                          '. <br>Click the button below to download ',
+                                          'a list of the missing gene ids.<br>')
+                  } else {
+                    alert_anchor <- 'input_file_alert_stages'
+                    add_button <- FALSE
+                    msg_content <- warning_components[2]
+                  }
+                  createAlert(session, anchorId = alert_anchor, 
+                              title = alert_title, content = msg_content, 
+                              style = 'warning')
+                  if (add_button) {
+                    insertUI(alert_div, where = "beforeEnd",
+                             downloadButton(button_name, 'Missing Genes'),
+                             multiple = FALSE, immediate = TRUE,
+                             session = session)
+                  }
                   invokeRestart("muffleWarning")
                 })
             
@@ -247,6 +284,38 @@ server <- function(input, output, session) {
       }
     }
   })
+  
+  output$missing_genes_list_expt <- downloadHandler(
+    filename = function() {
+      paste(Sys.Date(), 'missing_genes-expt.tsv', sep = '.')
+    },
+    content = function(file) {
+      expt_data <- isolate(exptData())
+      baseline_only <- setdiff(rownames(Mm_baseline), rownames(expt_data))
+      
+      write.table(
+        baseline_only, file = file, quote = FALSE,
+        col.names = FALSE, row.names = FALSE, sep = "\t"
+      )
+    },
+    contentType = 'text/tsv'
+  )
+  
+  output$missing_genes_list_baseline <- downloadHandler(
+    filename = function() {
+      paste(Sys.Date(), 'missing_genes-baseline.tsv', sep = '.')
+    },
+    content = function(file) {
+      expt_data <- isolate(exptData())
+      expt_only_genes <- setdiff(rownames(expt_data), rownames(Mm_baseline))
+      
+      write.table(
+        expt_only_genes, file = file, quote = FALSE,
+        col.names = FALSE, row.names = FALSE, sep = "\t"
+      )
+    },
+    contentType = 'text/tsv'
+  )
   
   # run PCA with just match baseline samples for speed
   pca_info <- reactive({

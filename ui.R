@@ -77,7 +77,11 @@ ui <- fluidPage(
                       )
                    ),
                    fluidRow(
-                      bsAlert("input_file_alert")
+                      div(id = 'input_files_info',
+                        bsAlert("input_file_alert_baseline"),
+                        bsAlert("input_file_alert_expt"),
+                        bsAlert("input_file_alert_stages")
+                      )
                    )
                  )
                )

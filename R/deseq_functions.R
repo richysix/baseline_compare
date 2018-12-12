@@ -63,12 +63,14 @@ create_new_DESeq2DataSet <- function( expt_data, baseline_data = NULL,
     # create warning for any missing genes
     msg <- NULL
     if ( length(expt_only_genes) > 0 ) {
-      msg <- paste0('There are ', length(expt_only_genes), 
+      msg <- paste0('Missing genes in Baseline data: ', 
+                    'There are ', length(expt_only_genes), 
                     ' genes in the experimental data, that are not in the Baseline data')
       warning(msg)
     }
     if ( length(baseline_only) > 0 ) {
-      msg <- paste0('There are ', length(baseline_only), 
+      msg <- paste0('Missing genes in experimental data: ',
+                    'There are ', length(baseline_only), 
                     ' genes in the Baseline data, that are not in the experimental data')
       warning(msg)
     }
@@ -81,7 +83,9 @@ create_new_DESeq2DataSet <- function( expt_data, baseline_data = NULL,
     expt_only_stages <- setdiff(levels(colData(expt_data)[['stage']]), 
                                 levels(colData(baseline_data)[['stage']]) )
     if ( length(expt_only_stages) > 0 ) {
-      msg <- paste0('The following stages are present in the experimental data, but not in the Baseline data: ',
+      msg <- paste0('Missing stages in Baseline data: ', 
+                    'The following stages are present in the experimental data,',
+                    ' but not in the Baseline data<br>',
                     paste0(expt_only_stages, collapse = ', '))
       warning(msg)
     }

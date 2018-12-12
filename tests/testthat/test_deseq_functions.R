@@ -100,7 +100,7 @@ test_that("missing stage in expt data", {
                               gender_column = NULL, groups = NULL,
                               condition_column = 'condition', 
                               match_stages = TRUE, session_obj = session_obj),
-    'The following stages are present in the [A-Za-z]+ data, but not in the [A-Za-z]+ data:', 
+    'The following stages are present in the [A-Za-z]+ data, but not in the [A-Za-z]+ data', 
     info = 'missing stage'
   )
 })
