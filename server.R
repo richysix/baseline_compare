@@ -230,6 +230,9 @@ server <- function(input, output, session) {
           return(NULL)
         } else {
           expt_data <- isolate(exptData())
+          # send value of sig level to js whenever it changes
+          session$sendCustomMessage("sigLevel", isolate(input$sig_level))
+
           if (is.null(expt_data)) {
             return(NULL)
           } else {
@@ -829,23 +832,13 @@ server <- function(input, output, session) {
             colnames = c("Gene.ID", "Name", "log2FC", "padj", "Results Set", 
                          "Chr", "Start", "End", "Strand" ),
             selection = 'single', rownames = FALSE,
-            options = data_table_options ) %>%
-          formatStyle(c("padj.expt_only"), 
-                      backgroundColor = styleInterval(0.05, c('white', '#C0C0C0')) ) %>%
-          formatStyle(c("log2FC.expt_only"),
-                      valueColumns = c("padj.expt_only"),
-                      backgroundColor = styleInterval(0.05, c('white', '#C0C0C0')) )
-        
+            options = data_table_options ) 
+
       } else {
         results_dt <- 
           datatable(results_table, container = table_header_3ways,
             selection = 'single', rownames = FALSE,
-            options = data_table_options ) %>%
-          formatStyle(c("padj.expt_only", "padj.plus_baseline", "padj.with_stage"), 
-                      backgroundColor = styleInterval(0.05, c('white', '#C0C0C0')) ) %>%
-          formatStyle(c("log2FC.expt_only", "log2FC.plus_baseline", "log2FC.with_stage"),
-                      valueColumns = c("padj.expt_only", "padj.plus_baseline", "padj.with_stage"),
-                      backgroundColor = styleInterval(0.05, c('white', '#C0C0C0')) )
+            options = data_table_options ) 
       }
       return(results_dt)
     }

@@ -11,6 +11,10 @@
     border-color: #ff0000;
 }
 
-.notSig {
-    background-color: #C0C0C0;
+.table-cell-na {
+    color: #a0a0a0;
+}
+
+.table-cell-notSig {
+    color: #a0a0a0;
 }
