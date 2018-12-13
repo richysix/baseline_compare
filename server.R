@@ -97,7 +97,7 @@ server <- function(input, output, session) {
               content = 'Click on a row in the Results table to see a plot of the normalised counts for each sample')
   createAlert(session, anchorId = 'deseq_progress_2', alertId = 'deseq_not_started',
               title = 'DESeq2 Analysis', style = 'info',
-              content = 'DESeq is not running yet. Check the "Files" tab.')
+              content = 'DESeq2 is not running yet. Check the "Files" tab.')
   
   # load samples and counts files
   exptData <- reactive({
@@ -738,7 +738,7 @@ server <- function(input, output, session) {
       createAlert(session, anchorId = 'deseq_progress_1', alertId = 'progress_6',
                   content = 'DESeq2 Finished', dismiss = FALSE)
       createAlert(session, anchorId = 'deseq_progress_2', alertId = 'progress_7',
-                  title = 'DESeq Analysis',
+                  title = 'DESeq2 Analysis',
                   content = 'DESeq2 Finished', dismiss = TRUE)
       return('')
     }
