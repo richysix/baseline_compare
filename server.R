@@ -77,13 +77,13 @@ server <- function(input, output, session) {
       print(version_name)
       print(baseline_files)
     }
-    if (session$userData[['testing']]) {
-      load(file.path('data', 'test-baseline.rda'))
-      return(Mm_baseline_test)
-    } else {
+    # if (session$userData[['testing']]) {
+    #   load(file.path('data', 'test-baseline.rda'))
+    #   return(Mm_baseline_test)
+    # } else {
       load(file.path('data', baseline_files[version_name]))
       return(eval(as.name(paste0('Mm_', version_name, '_baseline'))))
-    }
+    # }
   })
 
   exptCondition <- reactiveVal(value = 'mut')
