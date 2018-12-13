@@ -219,7 +219,7 @@ server <- function(input, output, session) {
           # close any open alert
           closeAlert(session, 'invalid_condition_col')
           createAlert(
-            session, anchorId = 'input_file_alert', dismiss = FALSE,
+            session, anchorId = 'input_file_alert_baseline', dismiss = FALSE,
             alertId = 'invalid_condition_col', title = 'Invalid Condition Column', 
             content = paste('The selected condition column contains', 
                             'entries that not allowed.', 'Valid values are: ',
@@ -249,6 +249,11 @@ server <- function(input, output, session) {
                                        session_obj = session )
             
             # experiment data plus stage matched baseline samples
+            # close any open alerts
+            lapply(c('missing_genes_baseline', 'missing_genes_expt',
+                     'missing_stages'), function(id){
+                       closeAlert(session, id)
+                     })
             Mm_baseline <- isolate(Mm_baseline())
             expt_plus_baseline_dds <-
               withCallingHandlers(
@@ -264,6 +269,7 @@ server <- function(input, output, session) {
                   add_button <- FALSE
                   if (alert_title == 'Missing genes in Baseline data') {
                     alert_anchor <- 'input_file_alert_baseline'
+                    alert_id <- 'missing_genes_baseline'
                     add_button <- TRUE
                     alert_div <- '#input_file_alert_baseline > .alert'
                     button_name <- 'missing_genes_list_baseline'
@@ -272,6 +278,7 @@ server <- function(input, output, session) {
                                           'a list of the missing gene ids.<br>')
                   } else if (alert_title == 'Missing genes in experimental data') {
                     alert_anchor <- 'input_file_alert_expt'
+                    alert_id <- 'missing_genes_expt'
                     add_button <- TRUE
                     alert_div <- '#input_file_alert_expt > .alert'
                     button_name <- 'missing_genes_list_expt'
@@ -280,12 +287,13 @@ server <- function(input, output, session) {
                                           'a list of the missing gene ids.<br>')
                   } else {
                     alert_anchor <- 'input_file_alert_stages'
+                    alert_id <- 'missing_stages'
                     add_button <- FALSE
                     msg_content <- warning_components[2]
                   }
                   createAlert(session, anchorId = alert_anchor, 
-                              title = alert_title, content = msg_content, 
-                              style = 'warning')
+                              alertId = alert_id, title = alert_title, 
+                              content = msg_content, style = 'warning')
                   if (add_button) {
                     insertUI(alert_div, where = "beforeEnd",
                              downloadButton(button_name, 'Missing Genes'),
