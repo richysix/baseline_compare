@@ -48,7 +48,7 @@ ui <- fluidPage(
                  br(),
                  h5("Sex"),
                  checkboxInput("use_gender", 
-                               label = 'Use sex information in DESeq',
+                               label = 'Use sex information in DESeq2',
                                value = TRUE),
                  radioButtons(
                    "sex_var",
