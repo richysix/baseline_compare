@@ -109,8 +109,8 @@ server <- function(input, output, session) {
       sample_file <- file.path('data', 'test-brd2-samples.txt')
       count_file <- file.path('data', 'test-brd2-counts.tsv')
     } else if (session$userData[['demo']]) {
-      sample_file <- file.path('data', 'Brd2-samples.txt')
-      count_file <- file.path('data', 'Brd2-counts.tsv')
+      sample_file <- file.path('www', 'demo_data', 'Brd2-samples.tsv')
+      count_file <- file.path('www', 'demo_data', 'Brd2-counts.tsv')
     } else{
       sample_file_info <- input$sample_file
       count_file_info <- input$count_file
