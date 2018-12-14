@@ -1,4 +1,4 @@
-context('DESeq Functions')
+context('DESeq2 Functions')
 library('rprojroot')
 rootPath <- find_root(is_rstudio_project)
 
@@ -121,7 +121,7 @@ test_that("Model matrix not full rank", {
 
 # Test run_deseq
 deseq_res <- run_deseq(expt_only_dds, 'mut', 'sib', 0.05)
-test_that("DESeq results", {
+test_that("DESeq2 results", {
   expect_equal(sum(deseq_res$result$padj < 0.05 & !is.na(deseq_res$result$padj)),
                524)
   expect_equal(head( order(deseq_res$result$padj) ),

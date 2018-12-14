@@ -164,7 +164,7 @@ create_new_DESeq2DataSet <- function( expt_data, baseline_data = NULL,
 #' @param sig_level threshold for statistical significance
 #' @param session session_object
 #' 
-#' @return list containing the 3 DESeq2 DataSet objects which have had DESeq run on them
+#' @return list containing the 3 DESeq2 DataSet objects which have had DESeq2 run on them
 #'      expt_only_res = list(deseq = DESeqDataSet object, results = DESeqResults object)
 #'      plus_baseline_res = list(deseq = DESeqDataSet object, results = DESeqResults object)
 #'      plus_baseline_with_stage_res = list(deseq = DESeqDataSet object, results = DESeqResults object)
