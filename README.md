@@ -1,7 +1,7 @@
 # Baseline CompaRe
 
 Baseline CompaRe is an R Shiny app designed to help with the analysis of
-E8.5-10.5 trancriptomics data, particularly in cases where the embryos of
+E8.5-10.5 mouse trancriptomics data, particularly in cases where the embryos of
 interest are developmentally delayed. We have produced RNA-seq data for
 wild-type embryos for stages from 4 to 36 somites to form a baseline for
 comparison to experimental samples. This allows us to prioritise genes that

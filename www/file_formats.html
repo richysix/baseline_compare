@@ -14,13 +14,13 @@
     </tbody>
 </table>
 <h5>Columns</h5>
-<p>This should be a tab-separated file containing the following columns:</p>
+<p>This must be a tab-separated file containing the following columns:</p>
 <ol>
-    <li><p><strong>sample identifiers</strong> - The first column must be sample identifiers.
-They should match the sample identifiers in the Count file.</p></li>
+    <li><p><strong>sample identifiers</strong> - The first column must be sample
+    identifiers and they must match the sample identifiers in the Count file. Required</p></li>
     <li><p><strong>condition/treatment</strong> - The condition or treatment being investigated.
-e.g. genotype or drug treatment</p></li>
-    <li><p><strong>stage</strong> - The developmental stage in somites</p></li>
+e.g. genotype or drug treatment. Required</p></li>
+    <li><p><strong>stage</strong> - The developmental stage in somites. Required</p></li>
     <li><p><strong>sex</strong> - sex of the embryos F/M. This is optional</p></li>
     <li><p><strong>sample_names</strong> - An optional column of samples names can be included</p></li>
 </ol>
@@ -39,10 +39,14 @@ e.g. genotype or drug treatment</p></li>
     </tbody>
 </table>
 <h5>Columns</h5>
-<p>This should be a tab-separated file. A column of Ensembl Gene identifiers
-named <strong>Gene.ID</strong> is required. The remaining columns should be the counts
-for the individual samples. The column names should be of the form
-<em>sample_id</em> count</p>
+<p>This must be a tab-separated file. Required columns are:
+<ul>
+<li><p><strong>Gene.ID</strong> - A column of Ensembl Gene identifiers (e.g. ENSMUSG00000062327). Required</p></li>
+<li><p><strong>Count columns</strong> - Counts for the individual samples.
+The counts themselves must be integers.
+The column names must be of the form <em>sample_id</em> count. Required</p></li>
+</ul>
+Any other columns will be ignored.</p>
 <h4>Options</h4>
 <h5>Threshold for statistical significance</h5>
 <p>This is for setting the threshold for statistical significance of the adjusted
