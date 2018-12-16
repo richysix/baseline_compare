@@ -35,10 +35,10 @@ server <- function(input, output, session) {
   
   # find available baseline versions
   get_baseline_files <- function(dir) {
-    baseline_files <- grep("Mm_GRCm[0-9]+_e[0-9]+_baseline_data.rda", 
+    baseline_files <- grep("Mm_GRCm[0-9]+_e[0-9]+_baseline_data.rds", 
                            list.files(dir), value = TRUE)
     ensembl_names <- gsub("Mm_", "", baseline_files)
-    ensembl_names <- gsub("_baseline_data.rda", "", ensembl_names)
+    ensembl_names <- gsub("_baseline_data.rds", "", ensembl_names)
     names(baseline_files) <- ensembl_names
     return(baseline_files)
   }
@@ -56,8 +56,8 @@ server <- function(input, output, session) {
       # ensembl version options
       ensembl_versions_options <- as.list(names(baselineFiles()))
       names(ensembl_versions_options) <- names(baselineFiles())
-      if ( any(ensembl_versions_options == 'GRCm38_88') ) {
-        selected_option <- 'GRCm38_88'
+      if ( any(ensembl_versions_options == 'GRCm38_e88') ) {
+        selected_option <- 'GRCm38_e88'
       } else {
         selected_option <- ensembl_versions_options[[1]]
       }
@@ -81,8 +81,8 @@ server <- function(input, output, session) {
     #   load(file.path('data', 'test-baseline.rda'))
     #   return(Mm_baseline_test)
     # } else {
-      load(file.path('data', baseline_files[version_name]))
-      return(eval(as.name(paste0('Mm_', version_name, '_baseline'))))
+      baseline_data <- readRDS(file.path('data', baseline_files[version_name]))
+      return( baseline_data )
     # }
   })
 
