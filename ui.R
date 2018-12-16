@@ -17,8 +17,14 @@ ui <- fluidPage(
                position = 'right',
                sidebarPanel(
                  width = 4,
-                 fileInput('sample_file', 'Load Sample File'),
-                 fileInput('count_file', 'Load Count File'),
+                 fileInput('sample_file',
+                           div('Load Sample File', br(),
+                               a(href="demo_data/Brd2-samples.tsv", "Example Sample File"))
+                           ),
+                 fileInput('count_file',
+                           div('Load Count File', br(),
+                               a(href="demo_data/Brd2-counts.tsv", "Example Count File"))
+                           ),
                  checkboxInput("demo_data", 
                                label = 'Use Demo data',
                                value = FALSE),
