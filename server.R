@@ -29,7 +29,7 @@ server <- function(input, output, session) {
   
   # set testing and debugging options
   session$userData[['debug']] <- TRUE
-  session$userData[['testing']] <- TRUE
+  session$userData[['testing']] <- FALSE
   session$userData[['precomputed']] <- FALSE
   # session <- list(userData = list(testing = TRUE, debug = TRUE))
   

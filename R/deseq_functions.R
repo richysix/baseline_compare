@@ -214,11 +214,12 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
   only_1 <- intersect(sig_genes_list[[1]], setdiff(all_genes, union(sig_genes_list[[2]], sig_genes_list[[3]])) )
   only_2 <- intersect(sig_genes_list[[2]], setdiff(all_genes, union(sig_genes_list[[1]], sig_genes_list[[3]])) )
   only_3 <- intersect(sig_genes_list[[3]], setdiff(all_genes, union(sig_genes_list[[1]], sig_genes_list[[2]])) )
-  in_1_and_2_not_3 <- intersect(intersect(sig_genes_list[[1]], sig_genes_list[[2]]), setdiff(all_genes, sig_genes_list[[3]]) )
-  in_1_and_3_not2 <- intersect(intersect(sig_genes_list[[1]], sig_genes_list[[2]]),
-                                                 setdiff(all_genes, sig_genes_list[[2]]) )
+  in_1_and_2_not_3 <- intersect(intersect(sig_genes_list[[1]], sig_genes_list[[2]]), 
+                                setdiff(all_genes, sig_genes_list[[3]]) )
+  in_1_and_3_not2 <- intersect(intersect(sig_genes_list[[1]], sig_genes_list[[3]]),
+                                setdiff(all_genes, sig_genes_list[[2]]) )
   in_2_and_3_not1 <- intersect(intersect(sig_genes_list[[2]], sig_genes_list[[3]]),
-                                                  setdiff(all_genes, sig_genes_list[[1]]) )
+                                setdiff(all_genes, sig_genes_list[[1]]) )
   in_all <- intersect( intersect(sig_genes_list[[1]], sig_genes_list[[2]]), sig_genes_list[[3]] )
   
   overlaps[['mutant_response']] <- c(in_2_and_3_not1, in_all)
@@ -272,6 +273,35 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
                  c("Gene.ID", "Name", "log2FC.expt_only", "padj.expt_only", 
                    "Results.Set","Chr", "Start", "End", "Strand" ) ]
   
+  # check categories are consistent
+  gene_counts <- table(merged_data$Results.Set)
+  expt_sig_pvals <- merged_data[['padj.expt_only']] < 0.05 & 
+                      !is.na(merged_data[['padj.expt_only']])
+  plus_baseline_sig_pvals <- merged_data[['padj.plus_baseline']] < 0.05 & 
+                              !is.na(merged_data[['padj.plus_baseline']])
+  with_stage_sig_pvals <- merged_data[['padj.with_stage']] < 0.05 & 
+                            !is.na(merged_data[['padj.with_stage']])
+
+  if (gene_counts[['Mutant Response']] != 
+      sum(expt_sig_pvals & plus_baseline_sig_pvals & with_stage_sig_pvals) +
+      sum(!expt_sig_pvals & plus_baseline_sig_pvals & with_stage_sig_pvals)) {
+    stop("The number of genes in the Mutant Response catgeory doesn't match the pvalues!")
+  } else if (gene_counts[['Delay']] !=
+      sum(expt_sig_pvals & plus_baseline_sig_pvals & !with_stage_sig_pvals)) {
+    stop("The number of genes in the Delay catgeory doesn't match the pvalues!")
+  } else if (gene_counts[['No Delay']] !=
+      sum(!expt_sig_pvals & !plus_baseline_sig_pvals & with_stage_sig_pvals) + 
+      sum(expt_sig_pvals & !plus_baseline_sig_pvals & with_stage_sig_pvals)) {
+    stop("The number of genes in the No Delay catgeory doesn't match the pvalues!")
+  } else if (gene_counts[['Discard']] !=
+      sum(expt_sig_pvals & !plus_baseline_sig_pvals & !with_stage_sig_pvals) + 
+      sum(!expt_sig_pvals & plus_baseline_sig_pvals & !with_stage_sig_pvals)) {
+    stop("The number of genes in the Discard catgeory doesn't match the pvalues!")
+  } else if (gene_counts[['Not Significant']] !=
+      sum(!expt_sig_pvals & !plus_baseline_sig_pvals & !with_stage_sig_pvals)) {
+    stop("The number of genes in the Not Significant catgeory doesn't match the pvalues!")
+  }
+
   # make results tables list
   results_tables <- list(
     unprocessed = unprocessed_merged_table,
