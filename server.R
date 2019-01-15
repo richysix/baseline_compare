@@ -930,14 +930,16 @@ server <- function(input, output, session) {
       gene_id <- results_table[ row_number, 'Gene.ID' ]
       gene_name <- results_table[ row_number, 'Name' ]
       # get counts for gene id
-      expt_plus_baseline <- results[['plus_baseline_res']]
+      expt_plus_baseline_with_stage_res <- results[['plus_baseline_with_stage_res']]
       counts <- 
-        counts(expt_plus_baseline[['deseq']], normalized = TRUE)[ gene_id, ]
+        counts(expt_plus_baseline_with_stage_res[['deseq']], 
+               normalized = TRUE)[ gene_id, ]
       counts_m <- melt(counts, value.name = 'Counts')
-      plot_data <- as.data.frame(merge(counts_m, 
-                                       colData(expt_plus_baseline[['deseq']]), 
-                                       by = 'row.names'))
-      
+      plot_data <- as.data.frame(
+        merge(counts_m, 
+              colData(expt_plus_baseline_with_stage_res[['deseq']]), 
+              by = 'row.names'))
+        
       if( session$userData[['debug']] ) {
         print(row_number)
         print(head(results_table))
