@@ -17,7 +17,8 @@ source(file.path('R', 'deseq_functions.R'))
 source(file.path('R', 'helper_functions.R'))
 
 # set option to make datatables render NA values as a string
-options(htmlwidgets.TOJSON_ARGS = list(na = 'string'))
+options(htmlwidgets.TOJSON_ARGS = list(na = 'string'),
+        shiny.maxRequestSize = 50 * 1024 ^ 2)
 
 # set some constants
 allowed_conditions <- c('hom', 'het', 'wt', 'mut', 'sib')
