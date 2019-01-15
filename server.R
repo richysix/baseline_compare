@@ -364,16 +364,17 @@ server <- function(input, output, session) {
                 })
             
             # experiment data plus all baseline samples
+            Mm_baseline_with_stage <- isolate(Mm_baseline_with_stage())
             expt_plus_all_baseline_dds <-
               suppressWarnings(
-                create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
+                create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline_with_stage, 
+                                         gender_column = gender_column,
                                          groups = groups, condition_column = condition_column, 
                                          match_stages = FALSE, session_obj = session ))
     
             # experiment data plus stage matched baseline samples
             # design formula includes stage
             groups <- c(groups, 'stage')
-            Mm_baseline_with_stage <- isolate(Mm_baseline_with_stage())
             expt_plus_baseline_with_stage_dds <-
               suppressWarnings(
                 create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline_with_stage, 
@@ -423,7 +424,7 @@ server <- function(input, output, session) {
         progress$set(message = "Calculating PCA...",
                      detail = 'This will depend on the number of samples', value = 0.25)
         
-        dds_vst <- varianceStabilizingTransformation(deseq_datasets[['expt_plus_baseline_dds']], blind=TRUE)
+        dds_vst <- varianceStabilizingTransformation(deseq_datasets[['expt_plus_baseline_with_stage_dds']], blind=TRUE)
         
         progress$set(value = 0.4)
         
