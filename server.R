@@ -854,6 +854,7 @@ server <- function(input, output, session) {
                           "colourCells( row, data, dataIndex )}") #colourCells is defined in results_table.js
       )
       if (results_source == 'unprocessed') {
+        session$sendCustomMessage("tableType", 'ExptOnly')
         results_dt <- 
           datatable(results_table, 
             colnames = c("Gene.ID", "Name", "log2FC", "padj", "Results Set", 
@@ -862,6 +863,7 @@ server <- function(input, output, session) {
             options = data_table_options ) 
 
       } else {
+        session$sendCustomMessage("tableType", 'AllThree')
         results_dt <- 
           datatable(results_table, container = table_header_3ways,
             selection = 'single', rownames = FALSE,
