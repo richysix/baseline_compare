@@ -85,6 +85,14 @@ server <- function(input, output, session) {
       return( baseline_data )
     # }
   })
+  
+  Mm_baseline_with_stage <- reactive({
+    Mm_baseline <- Mm_baseline()
+    colData(Mm_baseline)[['condition']] <- 
+      factor(rep("baseline", nrow(colData(Mm_baseline))), 
+             levels = c("baseline"))
+    return(Mm_baseline)
+  })
 
   exptCondition <- reactiveVal(value = 'mut')
   ctrlCondition <- reactiveVal(value = 'sib')
@@ -364,9 +372,11 @@ server <- function(input, output, session) {
             # experiment data plus stage matched baseline samples
             # design formula includes stage
             groups <- c(groups, 'stage')
+            Mm_baseline_with_stage <- isolate(Mm_baseline_with_stage())
             expt_plus_baseline_with_stage_dds <-
               suppressWarnings(
-                create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline, gender_column = gender_column,
+                create_new_DESeq2DataSet(expt_data, baseline_data = Mm_baseline_with_stage, 
+                                         gender_column = gender_column,
                                          groups = groups, condition_column = condition_column, 
                                          match_stages = TRUE, session_obj = session ))
             
