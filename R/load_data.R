@@ -110,6 +110,26 @@ valid_condition_column <-
   return(all(condition_column %in% allowed_values))
 }
 
+#' Check sex column
+#'
+#' \code{valid_sex_column} takes a vector and checks it is a valid sex column
+#'
+#'    The values are checked against the list of allowed values.
+#'    
+#' @param sex_column   factor/character - vector to check
+#' 
+#' @return logical TRUE/FALSE for whether vector passes
+#'
+#' @examples
+#' valid_sex_column( sample_info$sex )
+#'
+#' @export
+#'
+valid_sex_column <- function(sex_column, allowed_values = c('F', 'M') ){
+    return(all(sex_column %in% allowed_values))
+}
+
+
 #' load_count_data
 #'
 #' \code{load_count_data} Reads in the sample data and retuns it

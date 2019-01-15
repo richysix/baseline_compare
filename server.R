@@ -15,6 +15,7 @@ library(svglite)
 source(file.path('R', 'load_data.R'))
 source(file.path('R', 'deseq_functions.R'))
 source(file.path('R', 'helper_functions.R'))
+source(file.path('R', 'shiny_helpers.R'))
 
 # set option to make datatables render NA values as a string
 options(htmlwidgets.TOJSON_ARGS = list(na = 'string'),
@@ -22,6 +23,7 @@ options(htmlwidgets.TOJSON_ARGS = list(na = 'string'),
 
 # set some constants
 allowed_conditions <- c('hom', 'het', 'wt', 'mut', 'sib')
+allowed_sexes <- c('F', 'M')
 
 # Server logic
 server <- function(input, output, session) {
@@ -191,7 +193,18 @@ server <- function(input, output, session) {
     condition_var <- input$condition_var
     expt_data <- exptData()
     if (!is.null(expt_data)) {
-      return( valid_condition_column( colData(expt_data)[[condition_var]] ) )
+      return( valid_condition_column( colData(expt_data)[[condition_var]],
+                                      allowed_values = allowed_conditions) )
+    }
+  })
+  
+  # is the selected sex column valid?
+  validSexColumn <- reactive({
+    sex_var <- input$sex_var
+    expt_data <- exptData()
+    if (!is.null(expt_data)) {
+      return( valid_sex_column( colData(expt_data)[[sex_var]],
+                                      allowed_values = allowed_sexes) )
     }
   })
   
@@ -204,18 +217,21 @@ server <- function(input, output, session) {
       } else {
         condition_var <- isolate(input$condition_var)
         expt_data <- isolate(exptData())
-        closeAlert(session, 'invalid_condition_col')
-        createAlert(
-          session, anchorId = 'input_file_alert', dismiss = TRUE,
-          alertId = 'invalid_condition_col', title = 'Invalid Condition Column', 
-          content = paste('The selected condition column contains', 
-                          'entries that not allowed.', 'Valid values are: ',
-                          paste0(allowed_conditions, collapse = ', '), '<br>',
-                          'Selected column looks like this: ',
-                          paste0(colData(expt_data)[[condition_var]], 
-                                 collapse = ', ')),
-          style = 'danger'
-        )
+        create_invalid_col_alert('condition', 
+                                 colData(expt_data)[[condition_var]], 
+                                 allowed_conditions, session)
+      }
+    }
+    valid_sex_column <- validSexColumn()
+    if (!is.null(valid_sex_column)) {
+      if( valid_sex_column ) {
+        closeAlert(session, 'invalid_sex_col')
+      } else {
+        sex_var <- isolate(input$sex_var)
+        expt_data <- isolate(exptData())
+        create_invalid_col_alert('sex', 
+                                 colData(expt_data)[[sex_var]], 
+                                 allowed_sexes, session)
       }
     }
   })
@@ -230,17 +246,8 @@ server <- function(input, output, session) {
       } else {
         # create alert and stop analysis if an invalid column is selected
         if(!isolate(validConditionColumn())) {
-          # close any open alert
-          closeAlert(session, 'invalid_condition_col')
-          createAlert(
-            session, anchorId = 'input_file_alert_baseline', dismiss = FALSE,
-            alertId = 'invalid_condition_col', title = 'Invalid Condition Column', 
-            content = paste('The selected condition column contains', 
-                            'entries that not allowed.', 'Valid values are: ',
-                            paste0(allowed_conditions, collapse = ', '), '<br>',
-                            "DESeq2 analysis can't be started."),
-            style = 'danger'
-          )
+          return(NULL)
+        } else if(!isolate(validSexColumn())) {
           return(NULL)
         } else {
           expt_data <- isolate(exptData())
