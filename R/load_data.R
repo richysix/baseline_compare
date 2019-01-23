@@ -39,6 +39,9 @@ load_data <- function( sample_file, count_file, session ){
   rownames(counts) <- expt_count_data[, 'Gene.ID']
   row_data <- expt_count_data[ , !grepl('count$', colnames(expt_count_data)), drop = FALSE ]
   
+  # subset count data to samples
+  counts <- counts[ , row.names(sample_info) ]
+  
   expt_data <- SummarizedExperiment(
     assays = list(counts = as.matrix(counts)),
     rowData = DataFrame(row_data),
