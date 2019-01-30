@@ -141,8 +141,8 @@ the analysis must still be run first, because the count plots are generated from
 the results table.
 If you would like to view the data for one of the mutant lines that does not
 show developmental delay, you can still use this app.
-However you need to ignore all the results tables in the **RESULTS** tab except the
-**Experiment Samples Only** table.
+However you should only use the **Experiment Samples Only** table in the
+**RESULTS** tab.
 
 <h3 id="installation">Installation</h3>
 
