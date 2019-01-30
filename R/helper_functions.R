@@ -109,7 +109,7 @@ open_graphics_device <- function(dev_name, filename){
   } else if (dev_name == "svg") {
     svglite(file = filename, height = 7, width = 10) # open the svg device
   } else if (dev_name == "png") {
-    png(filename = filename, height = 480, width = 960, res = 100) # open the png device
+    png(filename = filename, height = 600, width = 960, res = 100) # open the png device
   } else {
     pdf(file = filename, paper = "special", height = 7, width = 10) # open the pdf device
   }
