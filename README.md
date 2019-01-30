@@ -14,7 +14,10 @@ For instructions about downloading the Shiny app for use locally, please see the
 [Installation](#installation) section.
 
 The app assumes you have count data for Ensembl gene ids produced from Illumina
-RNA-seq. Our baseline data was produced from Illumina RNA-seq, mapped with
+RNA-seq. Count data for the mutant lines presented in Collins et al. 2019 are
+available for download from [Figshare](https://doi.org/10.6084/m9.figshare.6819611).
+See the [Preprocessed data](#preprocessed-data) section.
+Our baseline data was produced from Illumina RNA-seq, mapped with
 [TopHat2](https://ccb.jhu.edu/software/tophat/index.shtml) and counted with
 [HTSeq-count](https://htseq.readthedocs.io/en/release_0.10.0/count.html).
 
@@ -99,6 +102,48 @@ Condition and Stage is plotted as colour.
 
 ![Count Plot showing Delay effect](www/images/count_plot_delay_example.png "Example Count Plot - Elf5 ENSMUSG00000027186")
 
+<h3 id="preprocessed-data">Preprocessed Data</h3>
+
+All the count data for the lines processed as part of the DMDD project are available
+for download from [Figshare](https://doi.org/10.6084/m9.figshare.6819611).
+The Figshare fileset consists of files of counts for each individual mutant line
+and a single sample info file for all lines. There is also a tar gzipped archive file
+for downloading everything at once.
+
+To use this data, download the appropriate count file and the samples file.
+You will need to make a separate samples file containg only the samples for the
+line to be analysed. For example if are using the count file for the _Hira_
+mutant line (Hira-deseq2-blacklist-adj-gt-adj-sex-outliers.tsv) then the samples
+file should look like this.
+
+|   |condition|group|stage|somite_number|
+|---|---------|-----|-----|-------------|
+|Hira_het1|het|M|27somites|27|
+|Hira_het2|het|F|24somites|24|
+|Hira_het3|het|M|26somites|26|
+|Hira_het4|het|F|22somites|22|
+|Hira_het5|het|M|26somites|26|
+|Hira_het6|het|F|24somites|24|
+|Hira_hom1|hom|M|14somites|14|
+|Hira_hom2|hom|F|10somites|10|
+|Hira_hom3|hom|M|16somites|16|
+|Hira_hom4|hom|F|8somites|8|
+|Hira_hom6|hom|F|8somites|8|
+|Hira_hom7|hom|F|8somites|8|
+|Hira_wt2|wt|F|25somites|25|
+|Hira_wt3|wt|F|26somites|26|
+|Hira_wt4|wt|F|23somites|23|
+|Hira_wt5|wt|F|22somites|22|
+|Hira_wt6|wt|M|28somites|28|
+
+It is possible to use this app to simply visualise the count data, but in that case
+the analysis must still be run first, because the count plots are generated from
+the results table.
+If you would like to view the data for one of the mutant lines that does not
+show developmental delay, you can still use this app.
+However you need to ignore all the results tables in the **RESULTS** tab except the
+**Experiment Samples Only** table.
+
 <h3 id="installation">Installation</h3>
 
 The code can be download from [GitHub](https://github.com/richysix/baseline_compare)
@@ -144,3 +189,4 @@ library(devtools)
 install_github('richysix/shinyMisc')
 install_github('richysix/biovisr')
 ```
+
