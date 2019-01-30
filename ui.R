@@ -64,7 +64,9 @@ ui <- fluidPage(
                      "sex" = 'sex'
                    ),
                    selected = 'sex'
-                 )
+                 ),
+                 fileInput('saved_analysis',
+                           'Load Saved Analysis')
                ),
                mainPanel(
                  width = 8,

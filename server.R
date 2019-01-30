@@ -19,7 +19,7 @@ source(file.path('R', 'shiny_helpers.R'))
 
 # set option to make datatables render NA values as a string
 options(htmlwidgets.TOJSON_ARGS = list(na = 'string'),
-        shiny.maxRequestSize = 50 * 1024 ^ 2)
+        shiny.maxRequestSize = 500 * 1024 ^ 2)
 
 # set some constants
 allowed_conditions <- c('hom', 'het', 'wt', 'mut', 'sib')
@@ -109,6 +109,37 @@ server <- function(input, output, session) {
   createAlert(session, anchorId = 'deseq_progress_2', alertId = 'deseq_not_started',
               title = 'DESeq2 Analysis', style = 'info',
               content = 'DESeq2 is not running yet. Check the "Files" tab.')
+  
+  # load previous analysis
+  saved_analysis <- reactive({
+    rda_file_info <- input$saved_analysis
+    if (!is.null(rda_file_info)) {
+      # Create a Progress object
+      progress <- shiny::Progress$new(session)
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      
+      progress$set(message = "Loading Saved Analysis...",
+                   detail = 'This may take a while', value = 0.3)
+      
+      rda_file <- rda_file_info$datapath
+      # rda_file <- '~/Downloads/deseq_results.mut_vs_sib.2019-01-23.rda'
+      load(rda_file)
+      
+      progress$set(value = 1)
+      
+      # update sample_file and count_file to NULL
+      closeAlert(session, 'progress_0')
+      closeAlert(session, 'deseq_not_started')
+      createAlert(session, anchorId = 'progress', alertId = 'saved_analysis',
+                  content = 'A saved analysis has been uploaded.', dismiss = FALSE)
+      # simulate click on action button
+      # click('analyse_data')
+      return(saved_analysis)
+    } else {
+      return(NULL)
+    }
+  })
   
   # load samples and counts files
   exptData <- reactive({
@@ -244,19 +275,18 @@ server <- function(input, output, session) {
         load('data/test_deseq_datasets.rda')
         return(deseq_datasets)
       } else {
-        # create alert and stop analysis if an invalid column is selected
-        if(!isolate(validConditionColumn())) {
-          return(NULL)
-        } else if(!isolate(validSexColumn())) {
+        expt_data <- isolate(exptData())
+        if (is.null(expt_data)) {
           return(NULL)
         } else {
-          expt_data <- isolate(exptData())
-          # send value of sig level to js whenever it changes
-          session$sendCustomMessage("sigLevel", isolate(input$sig_level))
-
-          if (is.null(expt_data)) {
+          # create alert and stop analysis if an invalid column is selected
+          if(!isolate(validConditionColumn())) {
+            return(NULL)
+          } else if(!isolate(validSexColumn())) {
             return(NULL)
           } else {
+            # send value of sig level to js whenever it changes
+            session$sendCustomMessage("sigLevel", isolate(input$sig_level))
             use_gender <- isolate(input$use_gender)
             condition_column <- isolate(input$condition_var)
             if ( use_gender ) {
@@ -314,7 +344,7 @@ server <- function(input, output, session) {
                   createAlert(session, anchorId = alert_anchor, 
                               alertId = alert_id, title = alert_title, 
                               content = msg_content, style = 'warning')
-
+                  
                   if ( add_expt_only_button ) {
                     alert_div <- '#missing-genes-baseline'
                     button_name <- paste0('missing-genes-list-baseline-',
@@ -331,7 +361,7 @@ server <- function(input, output, session) {
                       content = function(file) {
                         expt_data <- isolate(exptData())
                         expt_only_genes <- setdiff(rownames(expt_data), rownames(Mm_baseline()))
-
+                        
                         write.table(
                           expt_only_genes, file = file, quote = FALSE,
                           col.names = FALSE, row.names = FALSE, sep = "\t"
@@ -340,7 +370,7 @@ server <- function(input, output, session) {
                       contentType = 'text/tsv'
                     )
                   }
-
+                  
                   if (add_baseline_only_button) {
                     alert_div <- '#missing-genes-expt'
                     button_name <- paste0('missing-genes-list-expt-',
@@ -358,7 +388,7 @@ server <- function(input, output, session) {
                       content = function(file) {
                         expt_data <- isolate(exptData())
                         baseline_only_genes <- setdiff(rownames(Mm_baseline()), rownames(expt_data))
-
+                        
                         write.table(
                           baseline_only_genes, file = file, quote = FALSE,
                           col.names = FALSE, row.names = FALSE, sep = "\t"
@@ -378,7 +408,7 @@ server <- function(input, output, session) {
                                          gender_column = gender_column,
                                          groups = groups, condition_column = condition_column, 
                                          match_stages = FALSE, session_obj = session ))
-    
+            
             # experiment data plus stage matched baseline samples
             # design formula includes stage
             groups <- c(groups, 'stage')
@@ -400,6 +430,8 @@ server <- function(input, output, session) {
           }
         }
       }
+    } else {
+      return(NULL)
     }
   })
 
@@ -407,7 +439,8 @@ server <- function(input, output, session) {
   pca_info <- reactive({
     deseq_datasets <- deseqDatasets()
     if (is.null(deseq_datasets)) {
-      return(NULL)
+      req(saved_analysis())
+      return(saved_analysis()[['pca_data']])
     } else {
       if (session$userData[['precomputed']]) {
         load('data/test_pca_info.rda')
@@ -540,9 +573,11 @@ server <- function(input, output, session) {
         print(col_palette)
         print(shape_palette)
       }
+      x_var <- ifelse(length(input$x_axis_pc) == 0, 'PC1', input$x_axis_pc) 
+      y_var <- ifelse(length(input$y_axis_pc) == 0, 'PC2', input$y_axis_pc) 
       pca_plot <- 
         scatterplot_with_fill_and_shape(
-          plot_data, input$x_axis_pc, input$y_axis_pc, 
+          plot_data, x_var, y_var, 
           fill_var = 'stage', fill_palette = col_palette,
           shape_var = 'condition', shape_palette = shape_palette,
           sample_names = input$sample_names)
@@ -627,9 +662,11 @@ server <- function(input, output, session) {
     } else {
       col_palette <- colour_palette(plot_data[['stage']])
       shape_palette <- shape_palette(plot_data[['condition']])
+      x_var <- ifelse(length(input$x_axis_pc) == 0, 'PC1', input$x_axis_pc) 
+      y_var <- ifelse(length(input$y_axis_pc) == 0, 'PC2', input$y_axis_pc) 
       pca_plot <- 
         scatterplot_with_fill_and_shape(
-          plot_data, input$x_axis_pc, input$y_axis_pc, 
+          plot_data, x_var, y_var, 
           fill_var = 'stage', fill_palette = col_palette,
           shape_var = 'condition', shape_palette = shape_palette,
           sample_names = input$sample_names)
@@ -744,6 +781,13 @@ server <- function(input, output, session) {
           )
         progress$set(value = 1)
         return(deseq_results_3_ways)
+      }
+    } else {
+      deseq_results <- saved_analysis()[['deseq_results']]
+      if (!is.null(deseq_results)) {
+        return(deseq_results)
+      } else {
+        return(NULL)
       }
     }
   })
@@ -905,8 +949,12 @@ server <- function(input, output, session) {
             Sys.Date(), 'rda', sep = '.')
     },
     content = function(file) {
-      deseq_results <- deseq_results()
-      save(deseq_results, file = file)
+      saved_analysis <- list(
+        pca_data = pca_info(),
+        deseq_results = deseq_results()
+      )
+      
+      save(saved_analysis, file = file)
     }
   )
   
