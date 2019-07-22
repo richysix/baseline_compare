@@ -6,7 +6,7 @@ interest are developmentally delayed. We have produced RNA-seq data for
 wild-type embryos for stages from 4 to 36 somites to form a baseline for
 comparison to experimental samples. This allows us to prioritise genes that
 are more likely to be differentially expressed due to the condition of interest,
-rather than due to developmental delay.
+rather than due to developmental delay (see [Collins et al. (2019)](https://doi.org/10.1038/s41467-019-10642-x)).
 
 ## Instructions
 
