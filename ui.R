@@ -64,7 +64,9 @@ ui <- fluidPage(
                      "sex" = 'sex'
                    ),
                    selected = 'sex'
-                 )
+                 ),
+                 fileInput('saved_analysis',
+                           'Load Saved Analysis')
                ),
                mainPanel(
                  width = 8,
@@ -90,6 +92,7 @@ ui <- fluidPage(
                    ),
                    fluidRow(
                       div(id = 'input_files_info',
+                        bsAlert("invalid_col_alert"),
                         bsAlert("input_file_alert_baseline"),
                         bsAlert("input_file_alert_expt"),
                         bsAlert("input_file_alert_stages")

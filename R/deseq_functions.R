@@ -333,7 +333,7 @@ overlap_deseq_results <- function( deseq_datasets, expt_condition, ctrl_conditio
     list(
       expt_only_res = expt_only_deseq_res,
       plus_baseline_res = expt_plus_baseline_deseq_res,
-      plus_baseline_with_stage_res = expt_plus_baseline_deseq_res,
+      plus_baseline_with_stage_res = expt_plus_baseline_with_stage_deseq_res,
       overlaps = overlaps,
       results_tables = results_tables
     )

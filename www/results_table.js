@@ -1,6 +1,7 @@
 var debug = true
 var testing = true
 var sigLevel = 0.05
+var tableType = 'AllThree'
 
 // function to hightlight which results button has been clicked on
 function hightlightSelectedButton(buttonId) {
@@ -40,18 +41,40 @@ function updateSigLevel(msg) {
     }
 }
 
+// function to update the sigLevel variable based on selection in the
+// Shiny UI
+function updateTableType(msg) {
+    if (debug) {
+        console.log(msg)
+        console.log(tableType)
+    }
+    // check message
+    if (tableType != 'AllThree' && tableType != 'ExptOnly') {
+        console.log('Error: unexpected item in the bagging area! - ', tableType)
+    }
+    tableType = msg;
+    if (debug) {
+        console.log(tableType)
+    }
+}
+
+
+
 //function to change the colour of table cells base on their content
 //used when producing the results DataTable
 var table_def = {
-    'expt_only': { 'padj': 3, 'log2fc': 2 },
-    'plus_baseline': { 'padj': 5, 'log2fc': 4 },
-    'with_stage': { 'padj': 7, 'log2fc': 6 },
+    'AllThree': {
+        'expt_only': { 'padj': 3, 'log2fc': 2 },
+        'plus_baseline': { 'padj': 5, 'log2fc': 4 },
+        'with_stage': { 'padj': 7, 'log2fc': 6 },
+    },
+    'ExptOnly': { 'expt_only': { 'padj': 3, 'log2fc': 2 } }
 }
 
 function colourCells( row, data, dataIndex ) {
-    for (x in table_def){
-        p_idx = table_def[x]['padj']
-        l_idx = table_def[x]['log2fc']
+    for (x in table_def[tableType] ){
+        p_idx = table_def[tableType][x]['padj']
+        l_idx = table_def[tableType][x]['log2fc']
         if (data[p_idx] == 'NA'){
             $('td:eq(' + p_idx + ')', row).addClass( 'table-cell-na' );
             $('td:eq(' + l_idx + ')', row).addClass( 'table-cell-na' );
@@ -69,4 +92,7 @@ $(document).ready( function() {
 
     Shiny.addCustomMessageHandler("sigLevel",
                                   updateSigLevel)
+    
+    Shiny.addCustomMessageHandler("tableType",
+                                  updateTableType)
 });
