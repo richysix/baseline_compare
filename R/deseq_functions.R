@@ -37,6 +37,12 @@ create_new_DESeq2DataSet <- function( expt_data, baseline_data = NULL,
     names(colData(expt_data))[ names(colData(expt_data)) == gender_column ] <- 'sex'
     if (is.null(groups)) {
       groups <- c('sex')
+    } else {
+      if (length(intersect(groups, gender_column)) == 0) {
+        warning('Sex column is not present in groups')
+      }
+      non_gender_columns <- setdiff(groups, gender_column)
+      groups <- c('sex', non_gender_columns)
     }
   }
   names(colData(expt_data))[ names(colData(expt_data)) == condition_column ] <- 'condition'
