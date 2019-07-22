@@ -236,3 +236,41 @@ merge_with_baseline <- function( expt_data, baseline_data, session_obj ) {
   
   return(merged_data)
 }
+
+#' remove_blacklist
+#'
+#' \code{remove_blacklist} Remove the blacklist genes from the supplied object
+#'
+#'    Take the supplied SummarizedExperiment object and remove the 
+#'    blacklist genes
+#'    
+#' @param data SummarizedExperiment object - data
+#' @param session session_object
+#' 
+#' @return SummarizedExperiment
+#'
+#' @examples
+#' remove_blacklist( baseline_data, session_obj )
+#' 
+#' @export
+#'
+remove_blacklist <- function( data, session_obj ) {
+  # load blacklist genes
+  blacklist_genes <- as.character(read.table(file.path('data', 'gene-blacklist.txt'))[,1])
+  to_remove <- intersect(rownames(data), blacklist_genes)
+  to_keep <- setdiff(rownames(data), blacklist_genes)
+  blacklist_only <- setdiff(blacklist_genes, rownames(data))
+  
+  # subset count data to genes to keep
+  data <- data[ to_keep, ]
+  
+  # create warning for blacklisted genes
+  msg <- NULL
+  if ( length(to_remove) > 0 ) {
+    msg <- paste0('Blacklisted genes: ', 
+                  length(to_remove), 
+                  ' genes have been blacklisted and removed from the baseline data.')
+    warning(msg)
+  }
+  return(data)
+}

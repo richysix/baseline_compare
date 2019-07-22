@@ -66,7 +66,10 @@ ui <- fluidPage(
                    selected = 'sex'
                  ),
                  fileInput('saved_analysis',
-                           'Load Saved Analysis')
+                           'Load Saved Analysis'),
+                 checkboxInput("remove_blacklist", 
+                               label = 'Remove genes blacklisted by Collins et al.',
+                               value = TRUE)
                ),
                mainPanel(
                  width = 8,
@@ -93,6 +96,7 @@ ui <- fluidPage(
                    fluidRow(
                       div(id = 'input_files_info',
                         bsAlert("invalid_col_alert"),
+                        bsAlert("blacklist_alert"),
                         bsAlert("input_file_alert_baseline"),
                         bsAlert("input_file_alert_expt"),
                         bsAlert("input_file_alert_stages")

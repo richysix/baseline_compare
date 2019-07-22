@@ -85,6 +85,51 @@ server <- function(input, output, session) {
     #   return(Mm_baseline_test)
     # } else {
       baseline_data <- readRDS(file.path('data', baseline_files[version_name]))
+      if (input$remove_blacklist) {
+        baseline_data <- 
+          withCallingHandlers(
+            remove_blacklist( baseline_data, session_obj ),
+            error = function(e){ stop(e) },
+            warning = function(w){
+              print(conditionMessage(w))
+              msg_content <- conditionMessage(w)
+              warning_components <- unlist( strsplit(msg_content, ": ") )
+              alert_title <- warning_components[1]
+              alert_anchor <- 'blacklist_alert'
+              alert_id <- 'blacklist-genes'
+              msg_content <- paste0(warning_components[2],
+                                    '<br>Click the button below to download ',
+                                    'a list of the missing gene ids.<br>')
+              createAlert(session, anchorId = alert_anchor, 
+                          alertId = alert_id, title = alert_title, 
+                          content = msg_content, style = 'warning')
+              alert_div <- '#blacklist-genes'
+              button_name <- paste0('blacklist-genes-list',
+                                    as.character(as.hexmode(sample(1:16777215, 1))))
+              # add button and download handler
+              insertUI(alert_div, where = "beforeEnd",
+                       downloadButton(button_name, 'Blacklist Genes'),
+                       multiple = FALSE, immediate = FALSE,
+                       session = session)
+              # creat download function
+              output[[button_name]] <- downloadHandler(
+                filename = function() {
+                  paste(Sys.Date(), 'blacklist_genes.tsv', sep = '.')
+                },
+                content = function(file) {
+                  blacklist_genes <- as.character(read.table(file.path('data', 'gene-blacklist.txt'))[,1])
+                  to_remove <- intersect(rownames(baseline_data), blacklist_genes)
+
+                  write.table(
+                    to_remove, file = file, quote = FALSE,
+                    col.names = FALSE, row.names = FALSE, sep = "\t"
+                  )
+                },
+                contentType = 'text/tsv'
+              )
+              invokeRestart("muffleWarning")
+            })
+      }
       return( baseline_data )
     # }
   })
@@ -164,10 +209,13 @@ server <- function(input, output, session) {
         return(NULL)
       }
     }
+    closeAlert(session, 'progress_0')
+    createAlert(session, anchorId = 'progress', alertId = 'progress_01',
+                content = 'Loading Experiment Data...', dismiss = FALSE)
     loaded_data <-
       load_data(sample_file, count_file, session)
     # update alerts
-    closeAlert(session, 'progress_0')
+    closeAlert(session, 'progress_01')
     createAlert(session, anchorId = 'progress', alertId = 'progress_1',
                 content = 'Experiment Data loaded.', dismiss = FALSE)
     return(loaded_data)
