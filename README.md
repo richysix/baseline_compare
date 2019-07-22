@@ -8,6 +8,11 @@ comparison to experimental samples. This allows us to prioritise genes that
 are more likely to be differentially expressed due to the condition of interest,
 rather than due to developmental delay (see [Collins et al. (2019)](https://doi.org/10.1038/s41467-019-10642-x)).
 
+##  Contact
+
+Please contact the [Busch Lab](https://www.buschlab.org/) (<a href="mailto:hello@buschlab.org">hello@buschlab.org</a>)
+for futher information.
+
 ## Instructions
 
 For instructions about downloading the Shiny app for use locally, please see the
